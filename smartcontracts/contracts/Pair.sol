@@ -6,8 +6,8 @@ import './libraries/UQ112x112.sol';
 import './interfaces/IERC20.sol';
 import './interfaces/PairInterface.sol';
 import './interfaces/FactoryInterface.sol';
+import './interfaces/ArachylInterface.sol';
 import './interfaces/IUniswapV2Callee.sol';
-import './CrosschainVerifier.sol';
 
 contract Pair is PairInterface, UniswapV2ERC20 {
     using SafeMath  for uint;
@@ -17,16 +17,13 @@ contract Pair is PairInterface, UniswapV2ERC20 {
     bytes4 private constant SELECTOR = bytes4(keccak256(bytes('transfer(address,uint)')));
 
     address public factory;
-    address public verifierManager;
     address public thisToken;
     address public targetToken;
 
-    bool    public pending;
+    bool    public pendingCreation;
     address public creator;
     uint[2] public lockedAmounts;               // Initial lockedAmounts tokens. till approvement
 
-    uint approveVerificationAmount;
-    uint disapproveVerificationAmount;
     mapping(address => bool) creationVerifiers;     // verified
 
     uint112 private reserve0;           // uses single storage slot, accessible via getReserves
@@ -67,7 +64,6 @@ contract Pair is PairInterface, UniswapV2ERC20 {
         address indexed to
     );
     event Sync(uint112 reserve0, uint112 reserve1);
-
     event Created();
     event Destroyed();
 
@@ -76,60 +72,97 @@ contract Pair is PairInterface, UniswapV2ERC20 {
     }
 
     // called once by the factory at time of deployment
-    // Initialize in the pending mode that Pair Creation announced.
+    // Initialize in the pendingCreation mode that Pair Creation announced.
     // The verifier picks the data, after matching with another part, verifier approves it.
-    function initialize(
+    function initializeCreation(
         address[2] calldata _tokens,
         uint[2] calldata _amounts,
         address _creator
     ) external {
         require(msg.sender == factory, 'FORBIDDEN'); // sufficient check
 
-        pending         = true;
+        pendingCreation         = true;
         thisToken       = _tokens[0];
         targetToken     = _tokens[1];
         lockedAmounts   = _amounts;
         creator         = _creator;
     }
 
-    /**
-     * todo Make sure that this one is called by the verifier
-     *
-     * todo pass the v,r,s just to make sure that the verifier checked the data correctly.
-     */
-    function approveCreation() external {
-        require(pending, "already confirmed");
+    function approveCreation(address[] calldata arachyls, uint8[] calldata v, bytes32[] calldata r, bytes32[] calldata s) external {
+        require(pendingCreation, "already confirmed");
 
-        CrosschainVerifier verifier = CrosschainVerifier(verifierManager);
-        require(verifier.isVerifier(msg.sender), "no_permission");
-        require(!creationVerifiers[msg.sender], "already_submitted");
+        ArachylInterface arachyl = ArachylInterface(factory);
 
-        creationVerifiers[msg.sender] = true;
-        approveVerificationAmount++;
+        uint8 b = arachyl.b();
+        require(
+            arachyls.length == b &&
+            v.length == b && 
+            r.length == b && 
+            s.length == b, "NOT_THRESHOLD"
+        );
 
-        uint maxAmount = verifier.maxVerifiers();
-        if (approveVerificationAmount >= verifier.minVerifiers()) {            
-            _cleanCreation();
+        uint state = 1;
 
-            emit Created();
-        } else if (approveVerificationAmount + disapproveVerificationAmount >= maxAmount) {
-            // disagreement among the verifiers. Therefore this verification failed.
-            // cancel the creation, and let user start from the beginning.
+        for (uint8 i = 0; i < b; i++) {
+            require(arachyls[i] != address(0), "ZERO_ADDRESS");            
+            require(!creationVerifiers[arachyls[i]], "DUPLICATE_ARACHYL");
+            require(arachyl.verifiers(arachyls[i]), "NOT_ARACHYL");
+            creationVerifiers[arachyls[i]] = true;
 
-            _transferBack();
-
-            selfdestruct(FactoryInterface(factory).feeToSetter());
-
-            _cleanCreation();
+            // Signature checking against
+            // this contract address
+            bytes32 _messageNoPrefix = keccak256(abi.encodePacked(address(this), state));
+      	    bytes32 _message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageNoPrefix));
+      	    address _recover = ecrecover(_message, v[i], r[i], s[i]);
+      	    require(_recover == arachyls[i],  "SIG");
         }
+
+        _cleanCreation();
+
+        /**
+         * Now mint first LPs.
+         */
+
+        emit Created();
     }
 
-    /**
-     * todo Make sure that this one is called by the verifier
-     */
-    function disapproveCreation() external {
-        require(pending, "already confirmed");
+    function revokeCreation(address[] calldata arachyls, uint8[] calldata v, bytes32[] calldata r, bytes32[] calldata s) external {
+        require(pendingCreation, "already confirmed");
 
+        ArachylInterface arachyl = ArachylInterface(factory);
+
+        uint8 b = arachyl.b();
+        require(
+            arachyls.length == b &&
+            v.length == b && 
+            r.length == b && 
+            s.length == b, "NOT_THRESHOLD"
+        );
+
+        uint state = 2;
+
+        for (uint8 i = 0; i < b; i++) {
+            require(arachyls[i] != address(0), "ZERO_ADDRESS");            
+            require(!creationVerifiers[arachyls[i]], "DUPLICATE_ARACHYL");
+            require(arachyl.verifiers(arachyls[i]), "NOT_ARACHYL");
+            creationVerifiers[arachyls[i]] = true;
+
+            // Signature checking against
+            // this contract address
+            bytes32 _messageNoPrefix = keccak256(abi.encodePacked(address(this), state));
+      	    bytes32 _message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageNoPrefix));
+      	    address _recover = ecrecover(_message, v[i], r[i], s[i]);
+      	    require(_recover == arachyls[i],  "SIG");
+        }
+
+        // disagreement among the verifiers. Therefore this verification failed.
+        // cancel the creation, and let user start from the beginning.
+
+        _transferBack();
+
+        selfdestruct(FactoryInterface(factory).feeToSetter());
+
+        _cleanCreation();
     }
 
     function _transferBack() internal {
@@ -137,11 +170,7 @@ contract Pair is PairInterface, UniswapV2ERC20 {
     }
 
     function _cleanCreation() internal {
-        delete pending;
-
-        delete approveVerificationAmount;
-        delete disapproveVerificationAmount;
-        delete creator;
+        pendingCreation = false;
     }
 
 }

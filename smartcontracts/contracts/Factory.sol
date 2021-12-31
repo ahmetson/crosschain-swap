@@ -3,8 +3,9 @@ pragma solidity =0.5.16;
 import './interfaces/FactoryInterface.sol';
 import './interfaces/IERC20.sol';
 import './Pair.sol';
+import './Arachyl.sol';
 
-contract Factory is FactoryInterface {
+contract Factory is FactoryInterface, Arachyl {
     address         public feeTo;
     address payable public feeToSetter;
 
@@ -51,7 +52,7 @@ contract Factory is FactoryInterface {
      *  @param amounts - amount of tokens to put on this blockchain.
      *  and second element is the amount on the target blockchain.
      */
-    function createPair(
+    function initializeCreation(
         address[2] calldata tokens, // token 0, token 1
         uint[2] calldata amounts // amount 0, amount 1
     ) external returns (address pair) {
@@ -70,7 +71,7 @@ contract Factory is FactoryInterface {
 
         require(IERC20(tokens[0]).transferFrom(msg.sender, pair, amounts[0]), "FAILED_TO_TRANSFER_TOKEN");
 
-        Pair(pair).initialize(tokens, amounts, msg.sender);
+        Pair(pair).initializeCreation(tokens, amounts, msg.sender);
 
         // populate mapping in the reverse direction
         getPair[tokens[0]][tokens[1]] = pair;

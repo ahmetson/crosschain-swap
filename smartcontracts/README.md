@@ -102,3 +102,56 @@ The *Pending* interactions without the second *Pending* interaction on another b
 The token swap **XDEX INTERACT** is charged of 0.3% fee on top of Token swap to the **XDEX**. From 0.3% fee, 85 percent, or 0.25% goes to Liquidity Providers. From 0.3% fee, 15 percent, or 0.05% goes to the **VERIF** nodes.
 
 Among **VERIF** fee, the fees collected in a one round, in every ten rounds goes to **SEADEX** developers. 
+
+---
+
+## Execution order
+All cross-chain operations we will call a *process*.
+
+Firstly, user initializes the process in one of the blockchains by calling a smartcontract method that starts with *initialize* prefix. For example:
+
+```
+initializeCreation()
+```
+
+Secondly, the verifier nodes that are part of **Ara blockchain** pick the *initialize* transaction, and duplicate the info into the **Ara blockchain** state.
+
+When the verifiers set the transaction info, they include the *status* of the transaction. It could be either **approve** or **revoke**. The process initialization is approved, if all data necessary for the process on both paired blockchains are valid. If not, then, the transaction will be revoked.
+
+The verification should be done by *[Avalanche Consensus](https://docs.avax.network/learn/platform-overview/avalanche-consensus/)* of the nodes in **Ara blockchain**.
+
+> In avalanche the sample size *k* is **20**. The quorum size 
+> *α* is **14**. And decision threshold *β* is **20**. 
+> 
+> In **Ara blockchain**, when the *initialization* of the process wanted to be verified, the validator picked by the concensus algorithm will ask random *β* nodes about validity of the *initialization*. If all nodes will response correctly, in a consecutive way, the validator will submit the second phase of the *process*.
+> The random selected *β* nodes in all network will ask another *k* nodes about validity of the *initialization* process. If *α* out of *k* nodes will reply as valid, then selected node will mark the decision as valid.
+
+Thirdly, after passing *initialization*, the node that adds a block in **Ara blockchain** will collect the signatures from *β* nodes, and it will push it to the target blockchain. As well as on source blockchain.
+
+Fourthly, in the next few blocks in **Ara blockchain** another miner will get on target blockchain the submitted transaction.
+And if its passed, it will mark the process as ended in **Ara blockchain**. Otherwise, it will push himself the transaction.
+If the process was marked as finished, then all participants will get a reward from the process attached fee.
+
+---
+
+## Ara blockchain
+*Ara* means "**in between**" in [Turkmen](https://en.wikipedia.org/wiki/Turkmen_language) language.
+
+The Ara blockchain is built on top of *[Avalance concensus protocol](https://avax.network)*. Its public decentralized blockchain without any restriction to join to the network.
+
+The nodes that connects to the *Ara* blockchain, should stake a minimum fee to avoid bots attack. For example **50$** worth **AVAX**.
+The nodes then register themselves as the *Arachyl*. The *arachyls* are nodes that are connected to one of the blockchain pairs, to submit data or to verify data on paired blockchains.
+
+In order to do that, the *Arachyl* node will register itself on Smartcontracts of the paired blockchains. Then it will have to include a Node or remote node of the paired blockchains. 
+
+For example if the paired blockchains are **Ethereum** and **Moonriver**. Then node will include a link to **Ethereum** blockchain via [infura](https://infura.io) and a link to **Moonriver** blockchain via [onfinality](https://onfinality.io).
+
+After that, the node will register itself as **Arachyl** in the **Ara blockchain** as **ETH-MOVR Arachyl**.
+
+When a user initiates a process, the node has to listen to the Smartcontracts, verify it, and then submit it. The node will come with interface that will support the Smartcontract interface on paired blockchains. As well as a method to relay a transaction on paired blockchain.
+
+When a validator wants to validate the process, he will find the supported Arachyl nodes via the Smartcontract in Ara blockchain, where the node registered itself as **Arachyl**.
+
+
+> **Question**
+> How to pick random nodes in the Avalanche consensus protocol?

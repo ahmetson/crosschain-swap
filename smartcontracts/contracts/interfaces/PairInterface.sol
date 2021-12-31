@@ -23,10 +23,9 @@ interface PairInterface {
 
     function MINIMUM_LIQUIDITY() external pure returns (uint);
     function factory() external view returns (address);
-    function verifierManager() external view returns(address);
     function thisToken() external view returns(address);
     function targetToken() external view returns(address);
-    function pending() external view returns(bool);
+    function pendingCreation() external view returns(bool);
     function lockedAmounts(uint) external view returns(uint256);              // Initial locked tokens. till approvement
     function creator() external view returns(address);              // Initial locked tokens. till approvement
 
@@ -35,8 +34,8 @@ interface PairInterface {
     function price1CumulativeLast() external view returns (uint);
     function kLast() external view returns (uint);
 
-    function initialize(address[2] calldata, uint[2] calldata, address) external;
+    function initializeCreation(address[2] calldata, uint[2] calldata, address) external;
 
-    function approveCreation() external;
-    function disapproveCreation() external;
+    function approveCreation(address[] calldata, uint8[] calldata, bytes32[] calldata, bytes32[] calldata) external;
+    function revokeCreation(address[] calldata, uint8[] calldata, bytes32[] calldata, bytes32[] calldata) external;
 }
