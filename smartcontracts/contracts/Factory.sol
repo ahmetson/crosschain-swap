@@ -5,23 +5,18 @@ import './interfaces/IERC20.sol';
 import './Pair.sol';
 
 contract Factory is FactoryInterface {
-    address public feeTo;
+    address         public feeTo;
     address payable public feeToSetter;
 
-    address public verifierManager;
+    address         public verifierManager;
+    uint            public targetChainID;
 
     // token on this blockchain => token on the target blockchain => pair
     mapping(address => mapping(address => address)) public getPair;
     address[] public allPairs;
 
-    uint targetChainID;
-
-    event ChanPairCreated(uint _firstChainID, uint _targetChainID);
+    event ChanPairCreated(uint indexed firstChainID, uint indexed targetChainID);
     event PairCreated(address indexed token0, address indexed token1, address pair, uint pairNumber);
-
-    // Round offset of this blockchain.
-    // another blockchain's id => offset of this blockchain against another.
-    mapping(uint => uint) public offsets;
 
     /**
      *  @notice Factory is deployed per blockchain pair.
@@ -55,14 +50,6 @@ contract Factory is FactoryInterface {
      *  and second token is the token on the target blockchain.
      *  @param amounts - amount of tokens to put on this blockchain.
      *  and second element is the amount on the target blockchain.
-     *  
-     *  @dev User submits the token on the first blockchain.
-     *  then on the target blockchain. 
-     *  The created HalfPair token will be in the pending mode. 
-     *  Eventually turned into active by the Verifiers.
-     *  
-     *  The token salt is generated as:
-     *  firstChain, targetChain, thisToken, targetToken
      */
     function createPair(
         address[2] calldata tokens, // token 0, token 1
@@ -97,20 +84,18 @@ contract Factory is FactoryInterface {
     }
 
     function setFeeTo(address _feeTo) external {
-        require(msg.sender == feeToSetter, 'UniswapV2: FORBIDDEN');
+        require(msg.sender == feeToSetter, 'FORBIDDEN');
         feeTo = _feeTo;
     }
 
     function setFeeToSetter(address payable _feeToSetter) external {
-        require(msg.sender == feeToSetter, 'UniswapV2: FORBIDDEN');
+        require(msg.sender == feeToSetter, 'FORBIDDEN');
         feeToSetter = _feeToSetter;
     }
 
     function getChainID() public view returns (uint) {
         uint id;
-        assembly {
-            id := chainid()
-        }
+        assembly { id := chainid() }
         return id;
     }
 }
