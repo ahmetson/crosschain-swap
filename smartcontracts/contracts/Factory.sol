@@ -83,7 +83,7 @@ contract Factory is FactoryInterface {
 
         require(IERC20(tokens[0]).transferFrom(msg.sender, pair, amounts[0]), "FAILED_TO_TRANSFER_TOKEN");
 
-        Pair(pair).initialize(tokens, amounts, msg.sender, verifierManager);
+        Pair(pair).initialize(tokens, amounts, msg.sender);
 
         // populate mapping in the reverse direction
         getPair[tokens[0]][tokens[1]] = pair;
