@@ -14,21 +14,19 @@ contract Pair is PairInterface, UniswapV2ERC20 {
     using UQ112x112 for uint224;
 
     uint public constant MINIMUM_LIQUIDITY = 10**3;
-    bytes4 private constant SELECTOR = bytes4(keccak256(bytes('transfer(address,uint256)')));
+    bytes4 private constant SELECTOR = bytes4(keccak256(bytes('transfer(address,uint)')));
 
     address public factory;
     address public verifierManager;
     address public thisToken;
     address public targetToken;
-    uint256 public offset;
-    bool    public pending;
-    uint256 public thisChainID;
-    uint256 public targetChainID;
-    address public creator;
-    uint256[2] public locked;               // Initial locked tokens. till approvement
 
-    uint256 approveVerificationAmount;
-    uint256 disapproveVerificationAmount;
+    bool    public pending;
+    address public creator;
+    uint[2] public lockedAmounts;               // Initial lockedAmounts tokens. till approvement
+
+    uint approveVerificationAmount;
+    uint disapproveVerificationAmount;
     mapping(address => bool) creationVerifiers;     // verified
 
     uint112 private reserve0;           // uses single storage slot, accessible via getReserves
@@ -80,36 +78,18 @@ contract Pair is PairInterface, UniswapV2ERC20 {
     // called once by the factory at time of deployment
     // Initialize in the pending mode that Pair Creation announced.
     // The verifier picks the data, after matching with another part, verifier approves it.
-    /// @param _offset on this blockchain offset.
     function initialize(
-        bool isFirst
-        , uint256 chain0 
-        , address token0 
-        , uint256 chain1 
-        , address token1 
-        , uint256[2] calldata amounts
-        , uint256 _offset
-        , address[2] calldata addresses
+        address[2] calldata _tokens,
+        uint[2] calldata _amounts,
+        address _creator
     ) external {
-        require(msg.sender == factory, 'UniswapV2: FORBIDDEN'); // sufficient check
-        pending = true;
-        if (isFirst) {
-            thisToken = token0;
-            thisChainID = chain0;
-            targetChainID = chain1;
-            targetToken = token1;
-            locked = [amounts[0], amounts[1]];
-        } else {
-            thisToken = token1;
-            thisChainID = chain1;
-            targetChainID = chain0;
-            targetToken = token0;
-            offset = _offset;
-            locked = [amounts[1], amounts[0]];
-        }
+        require(msg.sender == factory, 'FORBIDDEN'); // sufficient check
 
-        creator = addresses[0];
-        verifierManager = addresses[1];
+        pending         = true;
+        thisToken       = _tokens[0];
+        targetToken     = _tokens[1];
+        lockedAmounts   = _amounts;
+        creator         = _creator;
     }
 
     /**
@@ -127,7 +107,7 @@ contract Pair is PairInterface, UniswapV2ERC20 {
         creationVerifiers[msg.sender] = true;
         approveVerificationAmount++;
 
-        uint256 maxAmount = verifier.maxVerifiers();
+        uint maxAmount = verifier.maxVerifiers();
         if (approveVerificationAmount >= verifier.minVerifiers()) {            
             _mintFirst(creator);
             
@@ -140,7 +120,7 @@ contract Pair is PairInterface, UniswapV2ERC20 {
 
             _transferBack();
 
-            selfdestruct(FactoryInterface(factory).feeToSetter);
+            selfdestruct(FactoryInterface(factory).feeToSetter());
 
             _cleanCreation();
         }
@@ -155,13 +135,12 @@ contract Pair is PairInterface, UniswapV2ERC20 {
     }
 
     function _transferBack() internal {
-        IERC20(thisToken).transfer(creator, locked[0]);
+        IERC20(thisToken).transfer(creator, lockedAmounts[0]);
     }
 
     function _cleanCreation() internal {
         delete pending;
 
-        delete creationVerifiers;
         delete approveVerificationAmount;
         delete disapproveVerificationAmount;
         delete creator;
@@ -208,8 +187,8 @@ contract Pair is PairInterface, UniswapV2ERC20 {
     function _mintFirst(address to) internal lock returns (uint liquidity) {
         uint112 _reserve0 = 0;
         uint112 _reserve1 = 0;
-        uint balance0 = locked[0];
-        uint balance1 = locked[1];
+        uint balance0 = lockedAmounts[0];
+        uint balance1 = lockedAmounts[1];
         uint amount0 = balance0;
         uint amount1 = balance1;
 
