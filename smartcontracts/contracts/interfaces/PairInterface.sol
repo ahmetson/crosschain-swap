@@ -55,15 +55,7 @@ interface PairInterface {
     function skim(address to) external;
     function sync() external;
 
-    function initialize(
-        bool 
-        , uint256  
-        , address  
-        , uint256  
-        , address  
-        , uint256[2] calldata
-        , uint256 
-        , address) external;
+    function initialize(address[2] calldata, uint[2] calldata, address) external;
 
     function approveCreation() external;
     function disapproveCreation() external;
