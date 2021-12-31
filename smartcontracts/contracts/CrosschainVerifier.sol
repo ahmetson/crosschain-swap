@@ -1,9 +1,5 @@
 pragma solidity =0.5.16;
 
-import './interfaces/ICrosschainFactory.sol';
-import './interfaces/IERC20.sol';
-import './CrosschainHalfPair.sol';
-
 /**
  *  todo add verifier managers
  */
