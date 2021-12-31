@@ -9,7 +9,6 @@ contract Factory is FactoryInterface, Arachyl {
     address         public feeTo;
     address payable public feeToSetter;
 
-    address         public verifierManager;
     uint            public targetChainID;
 
     // token on this blockchain => token on the target blockchain => pair
@@ -25,7 +24,6 @@ contract Factory is FactoryInterface, Arachyl {
      */
     constructor(
         address payable _feeToSetter, 
-        address         _verifierManager, 
         uint            _targetChainID
     ) public {
         require(feeToSetter == address(0) || feeToSetter == msg.sender, "FORBIDDEN");
@@ -34,7 +32,6 @@ contract Factory is FactoryInterface, Arachyl {
         require(_targetChainID > 0 && _targetChainID != thisChainID, "Invalid target blockchain");
 
         feeToSetter     = _feeToSetter;
-        verifierManager = _verifierManager;
         targetChainID   = _targetChainID;
 
         emit ChanPairCreated(thisChainID, targetChainID);
