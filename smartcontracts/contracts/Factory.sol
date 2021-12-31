@@ -1,10 +1,10 @@
 pragma solidity =0.5.16;
 
-import './interfaces/ICrosschainFactory.sol';
+import './interfaces/FactoryInterface.sol';
 import './interfaces/IERC20.sol';
 import './CrosschainHalfPair.sol';
 
-contract CrosschainFactory is ICrosschainFactory {
+contract Factory is FactoryInterface {
     address public feeTo;
     address payable public feeToSetter;
 

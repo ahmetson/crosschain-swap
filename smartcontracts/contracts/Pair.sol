@@ -1,15 +1,15 @@
 pragma solidity =0.5.16;
 
-import './interfaces/ICrosschainHalfPair.sol';
 import './UniswapV2ERC20.sol';
 import './libraries/Math.sol';
 import './libraries/UQ112x112.sol';
 import './interfaces/IERC20.sol';
-import './interfaces/ICrosschainFactory.sol';
+import './interfaces/PairInterface.sol';
+import './interfaces/FactoryInterface.sol';
 import './interfaces/IUniswapV2Callee.sol';
 import './CrosschainVerifier.sol';
 
-contract CrosschainHalfPair is ICrosschainHalfPair, UniswapV2ERC20 {
+contract Pair is PairInterface, UniswapV2ERC20 {
     using SafeMath  for uint;
     using UQ112x112 for uint224;
 
@@ -140,7 +140,7 @@ contract CrosschainHalfPair is ICrosschainHalfPair, UniswapV2ERC20 {
 
             _transferBack();
 
-            selfdestruct(ICrosschainFactory(factory).feeToSetter);
+            selfdestruct(FactoryInterface(factory).feeToSetter);
 
             _cleanCreation();
         }
@@ -185,7 +185,7 @@ contract CrosschainHalfPair is ICrosschainHalfPair, UniswapV2ERC20 {
 
     // if fee is on, mint liquidity equivalent to 1/6th of the growth in sqrt(k)
     function _mintFee(uint112 _reserve0, uint112 _reserve1) private returns (bool feeOn) {
-        address feeTo = ICrosschainFactory(factory).feeTo();
+        address feeTo = FactoryInterface(factory).feeTo();
         feeOn = feeTo != address(0);
         uint _kLast = kLast; // gas savings
         if (feeOn) {
