@@ -13,7 +13,7 @@ interface FactoryInterface {
     function addBlockchainPair(uint256 _firstChainID, uint256 _lastChainID, uint256 _lastOffset) external returns (bool);
 
 
-    function getPair(uint256, uint256, address, address) external view returns (address pair);
+    function getPair(address, address) external view returns (address pair);
     function allPairs(uint) external view returns (address pair);
     function allPairsLength() external view returns (uint);
 
@@ -23,7 +23,7 @@ interface FactoryInterface {
     ) external returns (address pair);
 
     function setFeeTo(address) external;
-    function setFeeToSetter(address) external;
+    function setFeeToSetter(address payable) external;
 
     function getChainID() external view returns (uint256);
     function validBlockchainPair(uint256 thisChainID, uint256 targetChainID) external view returns (bool);
