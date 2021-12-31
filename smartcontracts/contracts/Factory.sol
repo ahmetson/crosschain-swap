@@ -16,7 +16,7 @@ contract Factory is FactoryInterface, Arachyl {
     address[] public allPairs;
 
     event ChanPairCreated(uint indexed firstChainID, uint indexed targetChainID);
-    event PairCreated(address indexed token0, address indexed token1, address pair, uint pairNumber);
+    event PairCreated(address indexed token0, address indexed token1, address indexed pair, uint pairNumber);
 
     /**
      *  @notice Factory is deployed per blockchain pair.
