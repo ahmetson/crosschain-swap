@@ -26,9 +26,9 @@ interface PairInterface {
     function verifierManager() external view returns(address);
     function thisToken() external view returns(address);
     function targetToken() external view returns(address);
-    function offset() external view returns(uint256);
-    function disabled() external view returns(bool);
-    function locked(uint) external view returns(uint256);              // Initial locked tokens. till approvement
+    function pending() external view returns(bool);
+    function lockedAmounts(uint) external view returns(uint256);              // Initial locked tokens. till approvement
+    function creator() external view returns(address);              // Initial locked tokens. till approvement
 
     function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
     function price0CumulativeLast() external view returns (uint);
