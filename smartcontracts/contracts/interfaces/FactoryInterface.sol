@@ -4,7 +4,7 @@ interface FactoryInterface {
     event PairCreated(address indexed token0, address indexed token1, address pair, uint pairNumber, uint chain0, uint chain1);
 
     function feeTo() external view returns (address);
-    function feeToSetter() external view returns (address);
+    function feeToSetter() external view returns (address payable);
     function verifierManager() external view returns (address);
 
     function firstToLastCrosses(uint256) external view returns (uint256);
