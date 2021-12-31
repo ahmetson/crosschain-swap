@@ -1,6 +1,2 @@
 ﻿.env
-oracle/chainlink.env
-oracle/postgres.env
-oracle/chainlink_data/log.jsonl
-crosschain-lp/smartcontracts/artifacts
 smartcontracts/artifacts
