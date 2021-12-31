@@ -21,7 +21,6 @@ interface PairInterface {
 
     function permit(address owner, address spender, uint value, uint deadline, uint8 v, bytes32 r, bytes32 s) external;
 
-
     function MINIMUM_LIQUIDITY() external pure returns (uint);
     function factory() external view returns (address);
     function verifierManager() external view returns(address);
@@ -29,8 +28,6 @@ interface PairInterface {
     function targetToken() external view returns(address);
     function offset() external view returns(uint256);
     function disabled() external view returns(bool);
-    function thisChainID() external view returns (uint256);
-    function targetChainID() external view returns (uint256);
     function locked(uint) external view returns(uint256);              // Initial locked tokens. till approvement
 
     function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
