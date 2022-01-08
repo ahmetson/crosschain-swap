@@ -6,7 +6,6 @@ const addresses = {
         contracts: 
         {
             erc20: "0x513F7cbC3fFD22b60883208aC37A02ab69B64f87",    // test erc20 to work with
-            verifier: "0x219B6b1c4e64af46876E896E75e69892Af9a9999",
             factory: "0x922C9b89E115BAa5c9aF6F74419F73d1786263d0"
         }
     },
@@ -17,7 +16,6 @@ const addresses = {
         contracts: 
         {
             erc20: "0xa7a98F2BCa3dFe72010841cE6B12Ce4810D0f8F4",
-            verifier: "0x55Ff2B725e7353a0C6F9D1Ba69bc9354C19eb9bf",
             factory: "0x0544B81512DF70e8Aeb213FE644269fD621dEEB4"
         }
     }
@@ -30,7 +28,6 @@ const opposite = {
 
 let alias = {
     TEST_TOKEN: "erc20",
-    VERIFIER: "verifier",
     FACTORY: "factory"
 }
 
