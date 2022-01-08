@@ -32,8 +32,8 @@ const addresses = {
 }
 
 const opposite = {
-    4: 42,
-    42: 4
+    4: 97,
+    97: 4
 }
 
 let alias = {
