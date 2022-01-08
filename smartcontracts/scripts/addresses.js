@@ -5,8 +5,8 @@ const addresses = {
         remoteHttp: process.env.REMOTE_HTTP,
         contracts: 
         {
-            erc20: "0x513F7cbC3fFD22b60883208aC37A02ab69B64f87",    // test erc20 to work with
-            factory: "0x922C9b89E115BAa5c9aF6F74419F73d1786263d0"
+            erc20: "0xf75f75F4bc65CE68959d887F850b90f4B08b4a4b",    // test erc20 to work with
+            factory: "0x71E8B0632F2750f616B5C1773d7aA93c89e88bc5"
         }
     },
     42:                 // kovan network
