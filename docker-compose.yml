@@ -6,10 +6,10 @@ services:
   # Smartcontract
   #
   #################################################
-  crosschain-lp-smartcontracts:
+  xdex-smartcontracts:
     build:
       context: ./smartcontracts
-    container_name: "crosschain-lp-smartcontracts"
+    container_name: "xdex-smartcontracts"
     volumes:
       - type: bind
         source: ./smartcontracts
