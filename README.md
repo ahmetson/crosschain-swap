@@ -102,3 +102,35 @@ The *Pending* interactions without the second *Pending* interaction on another b
 The token swap **XDEX INTERACT** is charged of 0.3% fee on top of Token swap to the **XDEX**. From 0.3% fee, 85 percent, or 0.25% goes to Liquidity Providers. From 0.3% fee, 15 percent, or 0.05% goes to the **VERIF** nodes.
 
 Among **VERIF** fee, the fees collected in a one round, in every ten rounds goes to **SEADEX** developers. 
+
+In order to run **VERIF** node, the user has to stake Seascape Ore (ORE) token. Ore Token is equivalent 
+of 0.001 of Seascape Crowns token. Or 1 CWS = 100 ORE.
+So, we will have a **ARA between blockchains** section on XDEX website. On this section users can mint *Seascape Ore* by burning *Seascape Crowns* on Ethereum,
+Binance Smart Chain or Moonriver/Moonbeam networks. On Ethereum, the **ARA between blockchains** will connect to Uniswap, and buy Crowns for user with the token that he prefers. 
+On BSC network, the nodes interface will use PancakeSwap. And on Moonriver/Moonbeam the interface will use [SeaDex](https://seascape.finance/).
+
+Nodes should stake 2000 ORE (~147.2$). Each swap that node is initiating costs 0.01 ORE which means, every node can verify up to 200k processes (create liquidity, add liquidity, remove liquidity, swap tokens, another **ARACHYL** verification, price update). The 0.01 ORE is burnt in the blockchain.
+
+Nodes can top-up the node, if the ORE in the balance became less than 1 ORE only.
+
+Only the nodes that participated in the Payment are getting the fee for the swap. Swap fee is distributed as ORE token to the Verifiers in every 5 days. 
+
+The create liquidity, add liquidity, remove liquidity and node verification costs flexible size which is depending on different gas price. Nodes will update the fee on smartcontracts every 5 minutes. So if gas price on ethereum costs 60 GWEI, then node will require 60 GWEI * 100,000 gas value * 2 for two 
+blockchains.
+
+So if user wants to create a liqudity, then he will add 0.09 ETH along to pay for ARA nodes.
+
+The node that submits the verification gets its ORE burnt for 0.1 ORE, but will get 50% of the fee, while the rest of the nodes
+randomly picked to verify will share the rest of 50%. 
+
+> FOR EXAMPLE:
+> there are 20 nodes in threshold, and 20 nodes in sample. And one miner who updates the state of smartcontract on Ethereum and 
+> Binance Smart Chain.
+>
+> the process is creation of the new liquidity.
+> The miner will get 0.045 ETH.
+> The 0.0315 ETH will be distributed among 20 threshold nodes, where each node gets 0.001575 ETH.
+> The 0.0135 ETH will be distributed among 20 samples, where each node gets 0.000675 ETH.
+> * 50% of fee goes to miner.
+> * 35% of fee goes to thresholds.
+> * 15% of fee goes to samples.
