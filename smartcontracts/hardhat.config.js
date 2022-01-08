@@ -2,7 +2,6 @@ require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-etherscan");
 require('dotenv').config();
 
-
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
@@ -26,17 +25,26 @@ module.exports = {
     },
     rinkeby: {
       url: process.env.REMOTE_HTTP,
-      accounts: [process.env.DEPLOYER_KEY, "c2734c1c816ffbc1b632a3373e6a1711461412d48b5556c082d64e0cb1238fa2"],
-      gas: 2100000, gasPrice: 8000000000
+      accounts: [
+        process.env.DEPLOYER_KEY, 
+        process.env.DEPLOYER_KEY_2
+      ],
+      gas: 2100000, 
+      gasPrice: 8000000000
     },
     kovan: {
       url: process.env.KOVAN_REMOTE_HTTP,
-      accounts: [process.env.KOVAN_DEPLOYER_KEY, "c2734c1c816ffbc1b632a3373e6a1711461412d48b5556c082d64e0cb1238fa2"]
+      accounts: [
+        process.env.KOVAN_DEPLOYER_KEY, 
+        process.env.KOVAN_DEPLOYER_KEY_2
+      ]
     },
-    // bsctest: {
-    //   url: process.env.BSC_REMOTE_HTTP,
-    //   accounts: [process.env.BSC_DEPLOYER_KEY]
-    // }
+    bsc_testnet: {
+      url: process.env.BSC_TESTNET_REMOTE_HTTP,
+      accounts: [
+        process.env.BSC_TESTNET_DEPLOYER_KEY
+      ]
+    }
   },
   etherscan: {
     // Your API key for Etherscan
