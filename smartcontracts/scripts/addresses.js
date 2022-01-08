@@ -18,7 +18,17 @@ const addresses = {
             erc20: "0xa7a98F2BCa3dFe72010841cE6B12Ce4810D0f8F4",
             factory: "0x0544B81512DF70e8Aeb213FE644269fD621dEEB4"
         }
-    }
+    },
+    97:                  // bsc testnet network
+    {
+        offset: 0,
+        remoteHttp: process.env.BSC_TESTNET_REMOTE_HTTP,
+        contracts: 
+        {
+            erc20: "0x2b1b37F2CC4f81d2D9555B97B9ed3520ab01EF98",    // test erc20 to work with
+            factory: "0x9650784847c61b6da1E0aA51A9a9Fe7914Bc60b2"
+        }
+    },
 }
 
 const opposite = {
