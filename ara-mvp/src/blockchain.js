@@ -31,6 +31,15 @@ const factoryAbi = function() {
   return abi;
 }
 
+const pairAbi = function() {
+  let path = './src/abi/pair.json';
+
+  let rawdata = fs.readFileSync(path);
+  let abi = JSON.parse(rawdata);
+
+  return abi;
+}
+
 const factoryAddr = function(networkId) {
   if (networkId === 4) {
     return process.env.RINKEBY_FACTORY;
@@ -47,6 +56,12 @@ const factoryInstance = function(web3, networkId) {
 
   return loadContract(web3, addr, abi);
 }
+
+const pairInstance = function(web3, addr) {
+  let abi = pairAbi();
+  return loadContract(web3, addr, abi);
+};
+
 /**
  * Returns the Supported network ID and Name based on the event prefix name.
  * @requires a prefixed name of Seascape supported network on eventeum.
@@ -96,4 +111,5 @@ module.exports = {
   nameAndId,
   oppositeNetwork,
   factoryInstance,
+  pairInstance
 }

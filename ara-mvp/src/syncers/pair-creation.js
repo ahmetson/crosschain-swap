@@ -1,3 +1,5 @@
+let blockchain          = require('../blockchain');
+
 const APPROVE_STATE     = 1;
 const REVOKE_STATE      = 2;
 
@@ -25,9 +27,28 @@ let pairCreated = async (arachyls, networkId, targetNetworkId, details, web3) =>
         sigs.push(sig);
     }
 
+    // Preparing the Approvement
+    web3.eth.accounts.wallet.add(arachyls[0]);
+    let pairInstance = blockchain.pairInstance(web3, pair);
 
-    console.log(`Generated Signatures: `, sigs);
-    console.log(`Now need to push it to the Blockchain to approve.`);
+    let addrs = [];
+    let v     = [];
+    let r     = [];
+    let s     = [];
+    for (var i = 0; i < arachyls.length; i++) {
+      addrs.push(arachyls[i].address);
+      v.push(sigs[i].v);
+      r.push(sigs[i].r);
+      s.push(sigs[i].s);
+    }
+
+    console.log(`Approving the pair creation...`);
+    // approveCreation(address[] calldata arachyls, uint8[] calldata v, bytes32[] calldata r, bytes32[] calldata s
+    let gas   = await pairInstance.methods.approveCreation(addrs, v, r, s).estimateGas({from: arachyls[0].address});
+    let price = await web3.eth.getGasPrice();
+    let apprTx = await pairInstance.methods.approveCreation(addrs, v, r, s).send({from: arachyls[0].address, gas: gas, gasPrice: price});
+    console.log(apprTx);
+    console.log(`Approved pair creation`);
 }
 
 /**
