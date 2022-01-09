@@ -39,7 +39,9 @@ contract Factory is FactoryInterface, Arachyl {
         return allPairs.length;
     }
 
-    function getBytecode(address _owner, uint _foo) public pure returns (bytes memory) {
+    // uncomment to return bytecode of contract with arguments
+    // function getBytecode(address _owner, uint _foo) public pure returns (bytes memory) {
+    function getBytecode() public pure returns (bytes memory) {
         bytes memory bytecode = type(Pair).creationCode;
 
         // uncomment to have it with constructor arguments
@@ -58,7 +60,7 @@ contract Factory is FactoryInterface, Arachyl {
         bytes32 salt = keccak256(abi.encodePacked(thisChainID, targetChainID, tokens[0], tokens[1]));
 
         bytes32 hash = keccak256(
-            abi.encodePacked(bytes1(0xff), address(this), salt, keccak256(getBytecode(msg.sender, 0)))
+            abi.encodePacked(bytes1(0xff), address(this), salt, keccak256(getBytecode()))
         );
 
         // NOTE: cast last 20 bytes of hash to address
