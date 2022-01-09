@@ -7,7 +7,7 @@ describe("Pair Creation", async () => {
     let testTokenSupply = utils.parseEther("10000");
 
     let amount_1 = utils.parseEther("100");
-    let amount_2 = utils.parseEther("50");
+    let amount_2 = utils.parseEther("100");
 
     // imported contracts
     let testToken_1 = null;
