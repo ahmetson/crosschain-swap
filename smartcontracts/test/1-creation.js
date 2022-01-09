@@ -17,7 +17,6 @@ describe("Pair Creation", async () => {
 
     //session & accounts data
     let pairAddr = null;
-    let gameOwner = null;
     let accounts = null;
 
     let chainID = null;
