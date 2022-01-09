@@ -129,6 +129,9 @@ describe("Pair Creation", async () => {
 
         let apprCreationTx = await pair.connect(accounts[1]).approveCreation(arachyls, v, r, s);
         await apprCreationTx.wait();
+
+        let mintedAmount = await pair.balanceOf(accounts[0].address);
+        console.log(`Minted tokens amount for user ${utils.formatEther(mintedAmount)}`)
     });
 
 });
