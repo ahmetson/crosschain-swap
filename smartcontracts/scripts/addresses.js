@@ -6,7 +6,9 @@ const addresses = {
         contracts: 
         {
             erc20: "0xf75f75F4bc65CE68959d887F850b90f4B08b4a4b",    // test erc20 to work with
-            factory: "0x71E8B0632F2750f616B5C1773d7aA93c89e88bc5"
+            factory: "0x1fbC435F5Ce41aF6E4988be77453b6383a3d3b5b"
+            // factory: "0x531ef20AA67E3B8320b265e28216D69d73Bb2d38"   // without pair creation
+            // factory: "0xb243E1e6fDb19DF2AF83Ce5A661cEB935369F919"       // without calling pair's function
         }
     },
     42:                 // kovan network
