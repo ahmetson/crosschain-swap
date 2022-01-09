@@ -18,7 +18,7 @@ let get = async (web3) => {
 
     try {
         let acc_1 = web3.eth.accounts.privateKeyToAccount(privKey_1);
-        let acc_2 = web3.eth.accounts.privateKeyToAccount(privKey_1);
+        let acc_2 = web3.eth.accounts.privateKeyToAccount(privKey_2);
         return [acc_1, acc_2];
     } catch (error) {
         throw error.toString();
