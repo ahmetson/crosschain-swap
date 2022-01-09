@@ -10,7 +10,6 @@ ethereum:
     maxBlocksToSync: 0
   - name: rinkeby
     blockStrategy: PUBSUB
-    # url: "ws://eth-gateway:3005/ws"
     url: wss://rinkeby.infura.io/ws/v3/23559084cbf347d1b948f225c88a6fa0
     pollInterval: 1000
     maxIdleConnections: 10
@@ -57,8 +56,9 @@ eventFilters:
   - id: BscTestnetRinkebyPairCreated
     node: bscTestnet
     contractAddress: "0xCC084E9962eFc1f35fD18423Dc2424a0A0324f18"
+    contractAddress: "0x1fbC435F5Ce41aF6E4988be77453b6383a3d3b5b"
     eventSpecification:
-      eventName: PairCreated(tokens[0], tokens[1], pair, allPairs.length)
+      eventName: PairCreated
       indexedParameterDefinitions:
         - position: 0
           type: ADDRESS

@@ -1,0 +1,27 @@
+{
+  "name": "ara-mvp",
+  "version": "0.0.1",
+  "description": "ARA blockchain's MVP",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/ahmetson/xdex.git"
+  },
+  "keywords": [
+    "ara",
+    "xdex",
+    "ore",
+    "crowns",
+    "dex"
+  ],
+  "author": "Medet Ahmetson <admin@blocklords.io>",
+  "license": "MIT",
+  "dependencies": {
+    "kafkajs": "^1.15.0",
+    "node-cleanup": "^2.1.2",
+    "web3": "^1.6.1"
+  }
+}
