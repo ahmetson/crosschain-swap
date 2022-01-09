@@ -1,6 +1,7 @@
 let Web3 = require('web3');
+let fs   = require('fs');
 
-const reInit = function() {
+const reInit = function(remoteHttp) {
   var options = {
     timeout: 60000, // ms
   
@@ -13,7 +14,7 @@ const reInit = function() {
     }
   };
   
-  return new Web3(process.env.REMOTE_HTTP, options);
+  return new Web3(remoteHttp || process.env.REMOTE_HTTP, options);
 }
 
 const loadContract = function(web3, address, abi) {
@@ -21,6 +22,31 @@ const loadContract = function(web3, address, abi) {
   return contract;
 };
 
+const factoryAbi = function() {
+  let path = './src/abi/factory.json';
+
+  let rawdata = fs.readFileSync(path);
+  let abi = JSON.parse(rawdata);
+
+  return abi;
+}
+
+const factoryAddr = function(networkId) {
+  if (networkId === 4) {
+    return process.env.RINKEBY_FACTORY;
+  } else if (networkId === 97) {
+    return process.env.BSC_TESTNET_FACTORY;
+  }
+
+  throw `Factory address doesn't exist for chain ID ${networkId}`;
+}
+
+const factoryInstance = function(web3, networkId) {
+  let abi = factoryAbi();
+  let addr = factoryAddr(networkId);
+
+  return loadContract(web3, addr, abi);
+}
 /**
  * Returns the Supported network ID and Name based on the event prefix name.
  * @requires a prefixed name of Seascape supported network on eventeum.
@@ -68,5 +94,6 @@ module.exports = {
   loadContract,
   reInit,
   nameAndId,
-  oppositeNetwork
+  oppositeNetwork,
+  factoryInstance,
 }
