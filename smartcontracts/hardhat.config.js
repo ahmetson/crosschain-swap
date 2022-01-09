@@ -29,7 +29,8 @@ module.exports = {
         process.env.DEPLOYER_KEY, 
         process.env.DEPLOYER_KEY_2
       ],
-      gas: 2100000, 
+      gas: 29025240,
+      // gas: 2100000, 
       gasPrice: 8000000000
     },
     kovan: {
