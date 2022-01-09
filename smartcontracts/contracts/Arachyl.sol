@@ -1,4 +1,5 @@
-pragma solidity =0.5.16;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.6;
 
 import './interfaces/ArachylInterface.sol';
 
@@ -8,15 +9,15 @@ import './interfaces/ArachylInterface.sol';
 contract Arachyl is ArachylInterface {
     /// @notice Threshold amount of signatures this one is requiring
     /// @dev Naming taken from Avalance consensus protocol documentation
-    uint8 public b = 2;
+    uint8 public override b = 2;
 
-    uint public verifiersAmount;
-    mapping(address => bool) public verifiers;
+    uint public override verifiersAmount;
+    mapping(address => bool) override public verifiers;
 
     event VerifierRegistration(address indexed verifier, uint amount);
     event VerifierDeregistration(address indexed verifier, uint amount);
 
-    function verifierRegistration() external {
+    function verifierRegistration() override external {
         require(verifiers[msg.sender] == false, "ADDED");
         verifiers[msg.sender] = true;
         verifiersAmount++;
@@ -24,7 +25,7 @@ contract Arachyl is ArachylInterface {
         emit VerifierRegistration(msg.sender, verifiersAmount);
     }
 
-    function verifierDeregistration() external {
+    function verifierDeregistration() override external {
         require(verifiers[msg.sender] == true, "NOT_ADDED");
         delete verifiers[msg.sender];
         verifiersAmount--;

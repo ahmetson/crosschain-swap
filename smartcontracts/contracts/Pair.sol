@@ -1,4 +1,5 @@
-pragma solidity =0.5.16;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.6;
 
 import './UniswapV2ERC20.sol';
 import './libraries/Math.sol';
@@ -9,20 +10,20 @@ import './interfaces/FactoryInterface.sol';
 import './interfaces/ArachylInterface.sol';
 import './interfaces/IUniswapV2Callee.sol';
 
-contract Pair is PairInterface, UniswapV2ERC20 {
+contract Pair is UniswapV2ERC20, PairInterface {
     using SafeMath  for uint;
     using UQ112x112 for uint224;
 
-    uint public constant MINIMUM_LIQUIDITY = 10**3;
+    uint public override constant MINIMUM_LIQUIDITY = 10**3;
     bytes4 private constant SELECTOR = bytes4(keccak256(bytes('transfer(address,uint)')));
 
-    address public factory;
-    address public thisToken;
-    address public targetToken;
+    address public override factory;
+    address public override thisToken;
+    address public override targetToken;
 
-    bool    public pendingCreation;
-    address public creator;
-    uint[2] public lockedAmounts;               // Initial lockedAmounts tokens. till approvement
+    bool    public override pendingCreation;
+    address public override creator;
+    uint[2] public override lockedAmounts;               // Initial lockedAmounts tokens. till approvement
 
     mapping(address => bool) creationVerifiers;     // verified
 
@@ -30,9 +31,9 @@ contract Pair is PairInterface, UniswapV2ERC20 {
     uint112 private reserve1;           // uses single storage slot, accessible via getReserves
     uint32  private blockTimestampLast; // uses single storage slot, accessible via getReserves
 
-    uint public price0CumulativeLast;
-    uint public price1CumulativeLast;
-    uint public kLast; // reserve0 * reserve1, as of immediately after the most recent liquidity event
+    uint public override price0CumulativeLast;
+    uint public override price1CumulativeLast;
+    uint public override kLast; // reserve0 * reserve1, as of immediately after the most recent liquidity event
 
     uint private unlocked = 1;
     modifier lock() {
@@ -42,7 +43,7 @@ contract Pair is PairInterface, UniswapV2ERC20 {
         unlocked = 1;
     }
 
-    function getReserves() public view returns (uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast) {
+    function getReserves() public override view returns (uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast) {
         _reserve0 = reserve0;
         _reserve1 = reserve1;
         _blockTimestampLast = blockTimestampLast;
@@ -55,19 +56,12 @@ contract Pair is PairInterface, UniswapV2ERC20 {
 
     event Mint(address indexed sender, uint amount0, uint amount1);
     event Burn(address indexed sender, uint amount0, uint amount1, address indexed to);
-    event Swap(
-        address indexed sender,
-        uint amount0In,
-        uint amount1In,
-        uint amount0Out,
-        uint amount1Out,
-        address indexed to
-    );
+    event Swap(address indexed sender, uint amount0In, uint amount1In, uint amount0Out, uint amount1Out, address indexed to);
     event Sync(uint112 reserve0, uint112 reserve1);
     event Created();
     event Destroyed();
 
-    constructor() public {
+    constructor() {
         factory = msg.sender;
     }
 
@@ -78,7 +72,7 @@ contract Pair is PairInterface, UniswapV2ERC20 {
         address[2] calldata _tokens,
         uint[2] calldata _amounts,
         address _creator
-    ) external {
+    ) external override {
         require(msg.sender == factory, 'FORBIDDEN'); // sufficient check
 
         pendingCreation         = true;
@@ -88,7 +82,7 @@ contract Pair is PairInterface, UniswapV2ERC20 {
         creator         = _creator;
     }
 
-    function approveCreation(address[] calldata arachyls, uint8[] calldata v, bytes32[] calldata r, bytes32[] calldata s) external {
+    function approveCreation(address[] calldata arachyls, uint8[] calldata v, bytes32[] calldata r, bytes32[] calldata s) external override {
         require(pendingCreation, "already confirmed");
 
         ArachylInterface arachyl = ArachylInterface(factory);
@@ -126,7 +120,7 @@ contract Pair is PairInterface, UniswapV2ERC20 {
         emit Created();
     }
 
-    function revokeCreation(address[] calldata arachyls, uint8[] calldata v, bytes32[] calldata r, bytes32[] calldata s) external {
+    function revokeCreation(address[] calldata arachyls, uint8[] calldata v, bytes32[] calldata r, bytes32[] calldata s) external override {
         require(pendingCreation, "already confirmed");
 
         ArachylInterface arachyl = ArachylInterface(factory);
