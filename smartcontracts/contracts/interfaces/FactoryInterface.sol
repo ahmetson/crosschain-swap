@@ -10,7 +10,7 @@ interface FactoryInterface {
     function allPairsLength() external view returns (uint);
 
     // Creation
-    function initializeCreation(address[2] calldata tokens, uint256[2] calldata amounts) external returns (address pair);
+    function initializeCreation(address[2] calldata tokens, uint256[2] calldata amounts) external payable returns (address pair);
 
     // Fee for Swapping
     function feeTo() external view returns (address);

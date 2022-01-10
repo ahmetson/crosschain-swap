@@ -2,6 +2,7 @@
 pragma solidity ^0.8.6;
 
 import './interfaces/FactoryInterface.sol';
+import './interfaces/FeeVaultInterface.sol';
 import './interfaces/IERC20.sol';
 import './Pair.sol';
 import './Arachyl.sol';
@@ -31,6 +32,8 @@ contract Factory is FactoryInterface, Arachyl {
 
         feeToSetter     = _feeToSetter;
         targetChainID   = _targetChainID;
+
+        feeInit();
 
         emit ChanPairCreated(thisChainID, targetChainID);
     }
@@ -78,7 +81,9 @@ contract Factory is FactoryInterface, Arachyl {
     function initializeCreation(
         address[2] calldata tokens, // token 0, token 1
         uint[2] calldata amounts // amount 0, amount 1
-    ) external override returns (address) {
+    ) external payable override returns (address) {
+        require(feeVault != payable(0), "NO_FEE_VAULT");
+        require(msg.value >= feeUserPairCreation, "NOT_ENOUGH_PAIR_CREATION_FEE");
         uint thisChainID = block.chainid;
         require(amounts[0] > 0 && amounts[1] > 0, 'ZERO_AMOUNT');
         require(tokens[0] != address(0) && tokens[1] != address(0), 'ZERO_ADDRESS');
@@ -93,6 +98,11 @@ contract Factory is FactoryInterface, Arachyl {
         require(IERC20(tokens[0]).transferFrom(msg.sender, pair, amounts[0]), "FAILED_TO_TRANSFER_TOKEN");
 
         Pair(pair).initializeCreation(tokens, amounts, msg.sender);
+
+        feeVault.transfer(msg.value);
+        if ((msg.value - feeUserPairCreation) > 0) {
+            payable(msg.sender).transfer(msg.value - feeUserPairCreation);
+        }
 
         // populate mapping in the reverse direction
         getPair[tokens[0]][tokens[1]] = pair;

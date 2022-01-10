@@ -2,11 +2,14 @@
 pragma solidity ^0.8.6;
 
 import './interfaces/ArachylInterface.sol';
+import './interfaces/FeeVaultInterface.sol';
 
 /**
  *  todo add verifier managers
  */
 contract Arachyl is ArachylInterface {
+    address payable public override feeVault;
+
     /// @notice Threshold amount of signatures this one is requiring
     /// @dev Naming taken from Avalance consensus protocol documentation
     uint8 public override b = 2;
@@ -15,17 +18,27 @@ contract Arachyl is ArachylInterface {
     mapping(address => bool) override public verifiers;
 
     // Amount of tokens that user has to pay
-    uint public feeForArachyls;            
-    uint public feeUserPairCreation;
+    uint public override feeForArachyls;            
+    uint public override feeUserPairCreation;
     uint public feeTimestamp;                                       // last timestamp when it was updated
-    uint public feeVaultPercents            = 10;
+    uint public override feeVaultPercents            = 10;
     uint public feeInterval                 = 300;                                        // amount of seconds that should pass before updating fee
     mapping(uint => mapping(address => bool)) public feeUpdaters;
+
+    event FeeVault(address indexed vault);
 
     event VerifierRegistration(address indexed verifier, uint amount);
     event VerifierDeregistration(address indexed verifier, uint amount);
 
     event FeeUpdate(uint indexed forArachyls, uint indexed pairCreation, uint timestamp);
+
+    function setFeeVault(address payable _feeVault) external {
+        require(feeVault == address(0), "ALREADY_SET");
+        require(_feeVault != address(0), "ZERO_ADDRESS");
+        feeVault = _feeVault;
+
+        emit FeeVault(feeVault);
+    }
 
     function verifierRegistration() override external {
         require(verifiers[msg.sender] == false, "ADDED");
@@ -43,7 +56,11 @@ contract Arachyl is ArachylInterface {
         emit VerifierDeregistration(msg.sender, verifiersAmount);
     }
 
-    function feeInit(uint _pairCreation, uint _forArachyls) internal {
+    function feeInit() internal {
+        feeUserPairCreation = 3419909448362304;
+        feeForArachyls      = 215052909743664;
+
+        emit FeeUpdate(feeForArachyls, feeUserPairCreation, 0);
     }
 
     function feeUpdate(uint _pairCreation, uint _forArachyls, address[] calldata arachyls, uint8[] calldata v, bytes32[] calldata r, bytes32[] calldata s) external {
@@ -66,6 +83,9 @@ contract Arachyl is ArachylInterface {
         feeTimestamp        = block.timestamp;
         feeForArachyls      = _forArachyls;
         feeUserPairCreation = _pairCreation;
+
+        FeeVaultInterface vault = FeeVaultInterface(feeVault);
+        vault.rewardFeeUpdate(arachyls);
 
         emit FeeUpdate(_forArachyls, _pairCreation, block.timestamp);
     }
