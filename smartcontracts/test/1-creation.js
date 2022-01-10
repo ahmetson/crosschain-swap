@@ -21,10 +21,28 @@ describe("Pair Creation", async () => {
 
     let chainID = null;
 
+    // fees
+    let pairCreationFee = 0;
+    let forArachyls = 0;
+    let gasPrice = 0;
+
     async function signCreation(pairAddr, state, signer) {
         //v, r, s related stuff
         let bytes32 = utils.defaultAbiCoder.encode(["uint256"], [state]);
         let str = pairAddr + bytes32.substr(2);
+        let data = utils.keccak256(str);
+        let flatSig = await signer.signMessage(utils.arrayify(data));
+
+        let sig = utils.splitSignature(flatSig);
+
+        return [sig.v, sig.r, sig.s];
+    }
+
+    async function signFee(factoryAddr, prevTimestamp, pairCreation, forArachyls, signer) {
+        // address(this), feeTimestamp, _pairCreation, _forArachyls
+        //v, r, s related stuff
+        let bytes32 = utils.defaultAbiCoder.encode(["uint256", "uint256", "uint256"], [prevTimestamp, pairCreation, forArachyls]);
+        let str = factoryAddr + bytes32.substr(2);
         let data = utils.keccak256(str);
         let flatSig = await signer.signMessage(utils.arrayify(data));
 
@@ -98,6 +116,14 @@ describe("Pair Creation", async () => {
         await apprTx.wait();
         console.log(`Approved to spend Test Token 1 by factory`);
 
+        gasPrice = await ethers.provider.getGasPrice();
+        gasPrice = gasPrice.mul(ethers.BigNumber.from("15"));
+        console.log(`Gas Price: ${utils.formatUnits(gasPrice, 'ether')}`);
+
+        pairCreationFee = await factory.estimateGas.initializeCreation(tokens, amounts);
+        pairCreationFee = gasPrice.mul(pairCreationFee).div(ethers.BigNumber.from("10"));
+        console.log(`Fee user pair creation: ${utils.formatUnits(pairCreationFee, 'ether')}`);
+
         let initTx = await factory.initializeCreation(tokens, amounts);
         let res = await initTx.wait();
 
@@ -134,4 +160,33 @@ describe("Pair Creation", async () => {
         console.log(`Minted tokens amount for user ${utils.formatEther(mintedAmount)}`)
     });
 
+    it("update fee", async () => {        
+        let factoryAddr = factory.address;
+        let prevTimestamp = await factory.feeTimestamp(); prevTimestamp = parseInt(prevTimestamp);
+
+        let sig_1 = await signFee(factoryAddr, prevTimestamp, pairCreationFee, forArachyls, accounts[1]);
+        let sig_2 = await signFee(factoryAddr, prevTimestamp, pairCreationFee, forArachyls, accounts[2]);
+        
+        let arachyls = [accounts[1].address, accounts[2].address];
+
+        let v = [sig_1[0], sig_2[0]];
+        let r = [sig_1[1], sig_2[1]];
+        let s = [sig_1[2], sig_2[2]];
+
+        forArachyls = await factory.estimateGas.feeUpdate(pairCreationFee, forArachyls, arachyls, v, r, s);
+        forArachyls = gasPrice.mul(forArachyls).div(ethers.BigNumber.from("10"));;
+        console.log(`Fee update: ${utils.formatUnits(forArachyls, 'ether')}`);
+
+        sig_1 = await signFee(factoryAddr, prevTimestamp, pairCreationFee, forArachyls, accounts[1]);
+        sig_2 = await signFee(factoryAddr, prevTimestamp, pairCreationFee, forArachyls, accounts[2]);
+
+        v = [sig_1[0], sig_2[0]];
+        r = [sig_1[1], sig_2[1]];
+        s = [sig_1[2], sig_2[2]];
+
+        console.log(`Updating fees...`);
+        let feeTx = await factory.feeUpdate(pairCreationFee, forArachyls, arachyls, v, r, s);
+        await feeTx.wait();
+        console.log(`Fee updated!`);
+    });
 });
