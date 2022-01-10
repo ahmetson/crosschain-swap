@@ -14,6 +14,7 @@ describe("Pair Creation", async () => {
     let testToken_2 = null;
     let factory     = null;
     let pair        = null;
+    let vault       = null;
 
     //session & accounts data
     let pairAddr = null;
@@ -74,6 +75,15 @@ describe("Pair Creation", async () => {
         const Factory = await ethers.getContractFactory("Factory");
         factory = await Factory.deploy(feeToSetter, chainID + 1);
 
+        // Fee Vault - from user to arachyls
+        const FeeVault = await ethers.getContractFactory("FeeVault");
+        console.log(`Deploy fee vault with factory ${factory.address}`);
+        feeVault = await FeeVault.deploy(factory.address);
+
+        console.log(`Setting Link to Fee Vault in Factory...`);
+        factory.setFeeVault(feeVault.address);
+        console.log(`Set successfully!`);
+
         // const transferTx = await crowns.transfer(player.address, testTokenSupply, {from: gameOwner.address});
         // await transferTx.wait();
 
@@ -116,15 +126,12 @@ describe("Pair Creation", async () => {
         await apprTx.wait();
         console.log(`Approved to spend Test Token 1 by factory`);
 
-        gasPrice = await ethers.provider.getGasPrice();
-        gasPrice = gasPrice.mul(ethers.BigNumber.from("15"));
-        console.log(`Gas Price: ${utils.formatUnits(gasPrice, 'ether')}`);
+        let feeUserPairCreation = await factory.feeUserPairCreation();
+        console.log(`For for user pair creation: ${utils.formatUnits(feeUserPairCreation, 'ether')}`);
+        console.log(`For for user pair creation ${feeUserPairCreation}`);
 
-        pairCreationFee = await factory.estimateGas.initializeCreation(tokens, amounts);
-        pairCreationFee = gasPrice.mul(pairCreationFee).div(ethers.BigNumber.from("10"));
-        console.log(`Fee user pair creation: ${utils.formatUnits(pairCreationFee, 'ether')}`);
-
-        let initTx = await factory.initializeCreation(tokens, amounts);
+        pairCreationFee = await factory.estimateGas.initializeCreation(tokens, amounts, {value: feeUserPairCreation});
+        let initTx = await factory.initializeCreation(tokens, amounts, {value: feeUserPairCreation});
         let res = await initTx.wait();
 
         for (var event of res.events) {
@@ -160,10 +167,27 @@ describe("Pair Creation", async () => {
         console.log(`Minted tokens amount for user ${utils.formatEther(mintedAmount)}`)
     });
 
-    it("update fee", async () => {        
+    it("update fee", async () => {    
+        // parameters
+        let tokens = [testToken_1.address, testToken_2.address];
+        let amounts = [amount_1, amount_2];    
+
+        const apprTx = await testToken_1.approve(factory.address, testTokenSupply, {from: accounts[0].address});
+        await apprTx.wait();
+        console.log(`Approved to spend Test Token 1 by factory`);
+
+        gasPrice = await ethers.provider.getGasPrice();
+        gasPrice = gasPrice.mul(ethers.BigNumber.from("15"));
+        console.log(`Gas Price: ${utils.formatUnits(gasPrice, 'ether')}`);
+
+        // actually it should be approveCreation fee.
+        pairCreationFee = gasPrice.mul(pairCreationFee).mul(ethers.BigNumber.from("5")).div(ethers.BigNumber.from("10"));
+        console.log(`Fee user pair creation: ${utils.formatUnits(pairCreationFee, 'ether')}`);
+        
         let factoryAddr = factory.address;
         let prevTimestamp = await factory.feeTimestamp(); prevTimestamp = parseInt(prevTimestamp);
 
+        forArachyls = await factory.feeForArachyls();
         let sig_1 = await signFee(factoryAddr, prevTimestamp, pairCreationFee, forArachyls, accounts[1]);
         let sig_2 = await signFee(factoryAddr, prevTimestamp, pairCreationFee, forArachyls, accounts[2]);
         
@@ -174,7 +198,7 @@ describe("Pair Creation", async () => {
         let s = [sig_1[2], sig_2[2]];
 
         forArachyls = await factory.estimateGas.feeUpdate(pairCreationFee, forArachyls, arachyls, v, r, s);
-        forArachyls = gasPrice.mul(forArachyls).div(ethers.BigNumber.from("10"));;
+        forArachyls = gasPrice.mul(forArachyls).div(ethers.BigNumber.from("10"));
         console.log(`Fee update: ${utils.formatUnits(forArachyls, 'ether')}`);
 
         sig_1 = await signFee(factoryAddr, prevTimestamp, pairCreationFee, forArachyls, accounts[1]);
