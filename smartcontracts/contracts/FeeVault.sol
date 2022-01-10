@@ -42,7 +42,7 @@ contract FeeVault {
         factory = _factory;
     }
 
-    function rewardPairCreation(address[] calldata arachyls) onlyPair external payable {
+    function rewardPairCreation(address[] calldata arachyls) onlyPair external {
         ArachylInterface arachylLib = ArachylInterface(factory);
         
         // get from factory's arachyl interface fee price for pair creation
@@ -71,7 +71,7 @@ contract FeeVault {
         }
     }
 
-    function rewardFeeUpdate(address[] calldata arachyls) onlyFactory external payable {
+    function rewardFeeUpdate(address[] calldata arachyls) onlyFactory external {
         ArachylInterface arachylLib = ArachylInterface(factory);
 
         // get from factory's arachyl interface fee price for arachyls
