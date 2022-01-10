@@ -95,4 +95,6 @@ contract FeeVault {
             emit Reward(arachyls[i], reward, 0);
         }
     }
+
+    receive() external payable {}
 }
