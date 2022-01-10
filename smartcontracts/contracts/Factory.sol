@@ -82,13 +82,18 @@ contract Factory is FactoryInterface, Arachyl {
         address[2] calldata tokens, // token 0, token 1
         uint[2] calldata amounts // amount 0, amount 1
     ) external payable override returns (address) {
-        require(feeVault != payable(0), "NO_FEE_VAULT");
+        require(feeVault != address(0), "NO_FEE_VAULT");
         require(msg.value >= feeUserPairCreation, "NOT_ENOUGH_PAIR_CREATION_FEE");
         uint thisChainID = block.chainid;
         require(amounts[0] > 0 && amounts[1] > 0, 'ZERO_AMOUNT');
         require(tokens[0] != address(0) && tokens[1] != address(0), 'ZERO_ADDRESS');
 
         require(getPair[tokens[0]][tokens[1]] == address(0), 'PAIR_EXISTS');
+
+        feeVault.transfer(feeUserPairCreation);
+        if ((msg.value - feeUserPairCreation) > 0) {
+            payable(msg.sender).transfer(msg.value - feeUserPairCreation);
+        }
 
         // Creating the Pair contract
         bytes32 salt = keccak256(abi.encodePacked(thisChainID, targetChainID, tokens[0], tokens[1]));
@@ -98,11 +103,6 @@ contract Factory is FactoryInterface, Arachyl {
         require(IERC20(tokens[0]).transferFrom(msg.sender, pair, amounts[0]), "FAILED_TO_TRANSFER_TOKEN");
 
         Pair(pair).initializeCreation(tokens, amounts, msg.sender);
-
-        feeVault.transfer(msg.value);
-        if ((msg.value - feeUserPairCreation) > 0) {
-            payable(msg.sender).transfer(msg.value - feeUserPairCreation);
-        }
 
         // populate mapping in the reverse direction
         getPair[tokens[0]][tokens[1]] = pair;
