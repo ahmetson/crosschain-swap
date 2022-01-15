@@ -79,7 +79,10 @@ contract FeeVault {
 
         // set reward fee = this.balance < fee for arachyls ? this.balance : fee for arachyls
         uint totalReward = address(this).balance < forArachyls ? address(this).balance : forArachyls;
-        require(totalReward > 0, "NOT_ENOUGH_FUNDS");
+        if (totalReward == 0) {
+            return;
+        }
+        // require(totalReward > 0, "NOT_ENOUGH_FUNDS");
 
         // then get threshold from factory's interface
         uint8 b = arachylLib.b();
