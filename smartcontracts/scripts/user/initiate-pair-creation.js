@@ -31,8 +31,10 @@ async function main() {
 
   console.log(`create pair of ${chainID}:${token0}-${targetChainID}:${token1}`);
 
+  let feeUserPairCreation = await factory.feeUserPairCreation();
+
   console.log(`Initializing Pair creation...`);
-  let initTx = await factory.initializeCreation([token0, token1], [amount0, amount1]);
+  let initTx = await factory.initializeCreation([token0, token1], [amount0, amount1], {value: feeUserPairCreation});
   let res = await initTx.wait();
   console.log(`Pair creation initialized!`);
 
