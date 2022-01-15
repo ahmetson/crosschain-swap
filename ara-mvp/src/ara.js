@@ -25,6 +25,20 @@ let get = async (web3) => {
     }
 };
 
+let signFee = async (factoryAddr, prevTimestamp, pairCreation, forArachyls, signer, web3) => {
+    let bytes32     = web3.eth.abi.encodeParameters(["uint256", "uint256", "uint256"], [prevTimestamp, pairCreation, forArachyls]);
+    let hash        = web3.utils.keccak256(factoryAddr + bytes32.substr(2));
+
+    // address(this), feeTimestamp, _pairCreation, _forArachyls
+    //v, r, s related stuff
+    let sig = await arachyl.sign(hash);
+
+    sig.v = parseInt(sig.v, 16);
+
+    return sig;
+}
+
 module.exports = {
-    get
+    get,
+    signFee
 }

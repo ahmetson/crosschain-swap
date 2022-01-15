@@ -4,8 +4,11 @@ const blockchain    		= require('./blockchain');
 const ara                   = require('./ara');
 const trackingModel 		= require('./models/tracking');
 const { pairCreation }   	= require('./syncers/pair-creation');
+let gasUpdate 				= './gas-update';
+
 
 console.log(`Connecting to kafka at http://${process.env.KAFKA_URL}:${process.env.KAFKA_PORT}`);
+
 
 const kafka = new Kafka({
 	clientId: 'lighthouse-sync-app',
@@ -17,7 +20,7 @@ const kafka = new Kafka({
 
 let consume = async (eventName, callback) => {
 	const consumer = kafka.consumer({
-		groupId: 'lighthouse-sync-group-0011',
+		groupId: 'lighthouse-sync-group-0025',
 		maxBytes: 1048576000, // 1GB
 		maxBytesPerPartition: 1048576000, // 1GB
 		sessionTimeout: 60000,
@@ -38,6 +41,14 @@ let consume = async (eventName, callback) => {
 };
 
 (async () => {
+	signer = fork(gasUpdate, ['child'], { });
+
+	signer.on('close', () => {
+	  console.warn(chalk.redBright(chalk.bold(`> Smartcontract Signer`) + ` stopped!`));
+
+	  signer = undefined;
+	});
+
 	// Close db when nodejs exits unexpctedly or expectedly.
 	nodeCleanup(function (_exitCode, _signal) {
         console.log(`Pre exit from the ARA MVP!`);
