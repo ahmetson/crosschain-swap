@@ -1,0 +1,41 @@
+Date: 15:19, 15th January, 2022 (GMT+3), Istanbyl Ataturk International Airport.
+
+The core of Xdex lies on Ara blockchain.
+The aim of Ara blockchain is to make a special blockchain that acts as a bridge between various blockchains.
+
+Ara blockchain comes with two features: verified data reading, and transaction relayer.
+
+1. VERIFIED DATA READING 
+Users can use Ara blockchain for reading data from the Blockchains.
+By paying very low fee. This is provided by ARADAN. So it is not yet documented.
+The idea is, users are registering themselves as ara consumers by staking ORE token.
+This will whitelist this user's wallet address on ARADAN blockchain.
+
+When user wants to make a request, he makes a request to ARADAN blockchain.
+Users can execute a JSON RPC request to ARADAN load balancer. Which will query user's data from multiple nodes at the same time.
+
+For example, for Ethereum it will request from custom full nodes, alchemy and infura.
+
+2. TRANSACTION RELAYER 
+This is not just a relayer, its developed for cross-platform dapps, that has a one token on various blockchains.
+Let's say, a dapp created a token deployed on three blockchains. We then have a dapp that wants to do an airdrop.
+We do airdrop in one blockchain. The requirement for it is to lock the tokens for specific period of the time.
+
+So, when user transfers user's tokens on blockchain B to the lock smartcontract, the ara blockchain relayer will trigger on blockchain A 
+the event to update the user's balance for airdrop.
+
+In order to use Transaction Relayer, the developer has to stake some ORE token, and then deploy a smartcontract on ara blockchain.
+The smartcontract should follow the interface of RELAYER_INTERFACE.sol.
+
+User defines the source blockchain, smart contract, and event. Then creates a callback function that has target blockchain, 
+target smartcontract and target method information as an event. Event name should match to Smartcontract method.
+And event parameters should match to method parameters. 
+
+
+---
+
+Ara blockchain is used for the following cases:
+1. Xdex - a cross-chain LP provider.
+2. NFT Bridge - bridging nfts accross multiple nodes.
+3. gassless station or metadata
+4. smart accounts of Seascape.
