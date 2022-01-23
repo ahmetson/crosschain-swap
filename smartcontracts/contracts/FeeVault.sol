@@ -71,6 +71,61 @@ contract FeeVault {
         }
     }
 
+    function rewardAddLiquidity(address[] calldata arachyls) onlyPair external {
+        ArachylInterface arachylLib = ArachylInterface(factory);
+        
+        uint feeAddLiquidity = arachylLib.feeUserAddLiquidity();
+        uint feePercents = arachylLib.feeVaultPercents();
+
+        // divides fee to 100
+        uint percent = feeAddLiquidity.div(100);
+
+        // then gets 90% of pair creation fee
+        uint totalReward = uint(100).sub(feePercents).mul(percent);
+        require(address(this).balance >= totalReward, "NOT_ENOUGH_FUNDS");
+
+        // then get threshold from factory's interface
+        uint8 b = arachylLib.b();
+
+        // then divided pair creation fee to threshold number
+        uint reward = totalReward.div(b);
+
+        // and over the loop, transfer it to arachyls
+        for (uint8 i = 0; i < b; i++) {
+            payable(arachyls[i]).transfer(reward);
+
+            emit Reward(arachyls[i], reward, 2);
+        }
+    }
+
+
+    function rewardRemoveLiquidity(address[] calldata arachyls) onlyPair external {
+        ArachylInterface arachylLib = ArachylInterface(factory);
+        
+        uint feeRemoveLiquidity = arachylLib.feeUserRemoveLiquidity();
+        uint feePercents = arachylLib.feeVaultPercents();
+
+        // divides fee to 100
+        uint percent = feeRemoveLiquidity.div(100);
+
+        // then gets 90% of pair creation fee
+        uint totalReward = uint(100).sub(feePercents).mul(percent);
+        require(address(this).balance >= totalReward, "NOT_ENOUGH_FUNDS");
+
+        // then get threshold from factory's interface
+        uint8 b = arachylLib.b();
+
+        // then divided pair creation fee to threshold number
+        uint reward = totalReward.div(b);
+
+        // and over the loop, transfer it to arachyls
+        for (uint8 i = 0; i < b; i++) {
+            payable(arachyls[i]).transfer(reward);
+
+            emit Reward(arachyls[i], reward, 3);
+        }
+    }
+
     function rewardFeeUpdate(address[] calldata arachyls) onlyFactory external {
         ArachylInterface arachylLib = ArachylInterface(factory);
 

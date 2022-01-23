@@ -7,6 +7,8 @@ interface ArachylInterface {
     function b() external view returns (uint8);
 
     function feeUserPairCreation() external view returns(uint);
+    function feeUserAddLiquidity() external view returns(uint);
+    function feeUserRemoveLiquidity() external view returns(uint);
     function feeForArachyls() external view returns(uint);
     function feeVaultPercents() external view returns(uint);
 

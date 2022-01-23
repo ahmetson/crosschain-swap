@@ -20,6 +20,8 @@ contract Arachyl is ArachylInterface {
     // Amount of tokens that user has to pay
     uint public override feeForArachyls;            
     uint public override feeUserPairCreation;
+    uint public override feeUserAddLiquidity;
+    uint public override feeUserRemoveLiquidity;
     uint public feeTimestamp;                                       // last timestamp when it was updated
     uint public override feeVaultPercents            = 10;
     uint public feeInterval                 = 300;                                        // amount of seconds that should pass before updating fee
@@ -30,7 +32,7 @@ contract Arachyl is ArachylInterface {
     event VerifierRegistration(address indexed verifier, uint amount);
     event VerifierDeregistration(address indexed verifier, uint amount);
 
-    event FeeUpdate(uint indexed forArachyls, uint indexed pairCreation, uint timestamp);
+    event FeeUpdate(uint[4] fees, uint timestamp);
 
     function setFeeVault(address payable _feeVault) external {
         require(feeVault == address(0), "ALREADY_SET");
@@ -58,12 +60,19 @@ contract Arachyl is ArachylInterface {
 
     function feeInit() internal {
         feeUserPairCreation = 3419909448362304;
+        feeUserAddLiquidity = 3419909448362304;
+        feeUserRemoveLiquidity = 3419909448362304;
         feeForArachyls      = 215052909743664;
 
-        emit FeeUpdate(feeForArachyls, feeUserPairCreation, 0);
+        emit FeeUpdate([feeUserPairCreation, feeUserAddLiquidity, feeUserRemoveLiquidity, feeForArachyls], 0);
     }
 
-    function feeUpdate(uint _pairCreation, uint _forArachyls, address[] calldata arachyls, uint8[] calldata v, bytes32[] calldata r, bytes32[] calldata s) external {
+    /// @param _fees is
+    /// 0 - pair creation
+    /// 1 - add liquidity
+    /// 2 - remove liquidity
+    /// 3 - for arachyls to updating the fee
+    function feeUpdate(uint[4] memory _fees, address[] calldata arachyls, uint8[] calldata v, bytes32[] calldata r, bytes32[] calldata s) external {
         require(feeTimestamp + feeInterval <= block.timestamp, "too early");
         
         for (uint8 i = 0; i < b; i++) {
@@ -74,19 +83,21 @@ contract Arachyl is ArachylInterface {
 
             // Signature checking against
             // this contract address
-            bytes32 _messageNoPrefix = keccak256(abi.encodePacked(address(this), feeTimestamp, _pairCreation, _forArachyls));
+            bytes32 _messageNoPrefix = keccak256(abi.encodePacked(address(this), feeTimestamp, _fees));
       	    bytes32 _message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageNoPrefix));
       	    address _recover = ecrecover(_message, v[i], r[i], s[i]);
       	    require(_recover == arachyls[i],  "SIG");
         }
 
         feeTimestamp        = block.timestamp;
-        feeForArachyls      = _forArachyls;
-        feeUserPairCreation = _pairCreation;
+        feeUserPairCreation = _fees[0];
+        feeUserAddLiquidity = _fees[1];
+        feeUserRemoveLiquidity = _fees[2];
+        feeForArachyls      = _fees[3];
 
         FeeVaultInterface vault = FeeVaultInterface(feeVault);
         vault.rewardFeeUpdate(arachyls);
 
-        emit FeeUpdate(_forArachyls, _pairCreation, block.timestamp);
+        emit FeeUpdate(_fees, block.timestamp);
     }
 }
