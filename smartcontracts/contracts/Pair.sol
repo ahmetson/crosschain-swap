@@ -116,10 +116,6 @@ contract Pair is UniswapV2ERC20, PairInterface {
 
         _firstMint();
 
-        // address feeVault = ArachylInterface(factory).feeVault();
-        // FeeVaultInterface vault = FeeVaultInterface(feeVault);
-        // vault.rewardPairCreation(arachyls);
-
         emit Created();
     }
 
@@ -225,10 +221,6 @@ contract Pair is UniswapV2ERC20, PairInterface {
         initiatedAdditions[to].amount0 = 0;
         initiatedAdditions[to].amount1 = 0;
         initiatedAdditions[to].liquidity = 0;
-
-        // address feeVault = ArachylInterface(factory).feeVault();
-        // FeeVaultInterface vault = FeeVaultInterface(feeVault);
-        // vault.rewardAddLiquidity();
     }
 
     function initBurn(uint amount, address to) external lock returns (uint amount0, uint amount1) {
@@ -237,9 +229,7 @@ contract Pair is UniswapV2ERC20, PairInterface {
         require(initiatedRemovals[msg.sender].liquidity == 0, "IN_BURNING_PROCESS");
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
         address _token0 = thisToken;                                // gas savings
-        // address _token1 = _reserve1;                                // gas savings
         uint balance0 = IERC20(_token0).balanceOf(address(this));
-        // uint balance1 = IERC20(_token1).balanceOf(address(this));
         uint balance1 = _reserve1;
         uint liquidity = balanceOf[address(this)].mul(2);
 
@@ -254,7 +244,6 @@ contract Pair is UniswapV2ERC20, PairInterface {
         // _safeTransfer(_token1, to, amount1);
         balance0 = IERC20(_token0).balanceOf(address(this));
         balance1 = _reserve1 - amount1;
-        // balance1 = IERC20(_token1).balanceOf(address(this));
 
         // todo lock some token
 
@@ -274,10 +263,6 @@ contract Pair is UniswapV2ERC20, PairInterface {
 
         initiatedRemovals[to].liquidity = 0;
 
-        // address feeVault = ArachylInterface(factory).feeVault();
-        // FeeVaultInterface vault = FeeVaultInterface(feeVault);
-        // vault.rewardAddLiquidity(arachyls);
-
         emit Burn(to, amount0, amount1, to);
     }
 
@@ -293,10 +278,6 @@ contract Pair is UniswapV2ERC20, PairInterface {
         require(IERC20(thisToken).transferFrom(address(this), to, initiatedRemovals[to].amount0), "FAILED_TO_TRANSFER_TOKEN");
 
         // todo call mint function
-
-        // address feeVault = ArachylInterface(factory).feeVault();
-        // FeeVaultInterface vault = FeeVaultInterface(feeVault);
-        // vault.rewardAddLiquidity(arachyls);
 
         initiatedRemovals[to].liquidity = 0;
     }
@@ -314,10 +295,6 @@ contract Pair is UniswapV2ERC20, PairInterface {
 
         // todo call burn function
 
-        //     address feeVault = ArachylInterface(factory).feeVault();
-        //     FeeVaultInterface vault = FeeVaultInterface(feeVault);
-        //     vault.rewardAddLiquidity(arachyls);
-
         initiatedAdditions[to].amount0 = 0;
         initiatedAdditions[to].amount1 = 0;
         initiatedAdditions[to].liquidity = 0;
@@ -328,18 +305,9 @@ contract Pair is UniswapV2ERC20, PairInterface {
 
         ArachylInterface arachyl = ArachylInterface(factory);
 
-        uint state = 2;
-
         require(arachyl.verifiers(msg.sender), "NOT_ARACHYL");
 
-        // disagreement among the verifiers. Therefore this verification failed.
-        // cancel the creation, and let user start from the beginning.
-
         _transferBack();
-
-        // address feeVault = ArachylInterface(factory).feeVault();
-        // FeeVaultInterface vault = FeeVaultInterface(feeVault);
-        // vault.rewardPairCreation(arachyls);
 
         selfdestruct(FactoryInterface(factory).feeToSetter());
 
