@@ -17,6 +17,9 @@ interface PairInterface {
 
     function initializeCreation(address[2] calldata, uint[2] calldata, address) external;
 
-    function approveCreation(address[] calldata, uint8[] calldata, bytes32[] calldata, bytes32[] calldata) external;
-    function revokeCreation(address[] calldata, uint8[] calldata, bytes32[] calldata, bytes32[] calldata) external;
+    function approveCreation() external;
+    function revokeCreation() external;
+
+    function revokeBurn(address to) external;
+    function revokeMint(address to) external;
 }

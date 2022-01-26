@@ -105,42 +105,20 @@ contract Pair is UniswapV2ERC20, PairInterface {
         creator             = _creator;
     }
 
-    function approveCreation(address[] calldata arachyls, uint8[] calldata v, bytes32[] calldata r, bytes32[] calldata s) external override {
+    function approveCreation() external override {
         require(pendingCreation, "already confirmed");
 
         ArachylInterface arachyl = ArachylInterface(factory);
 
-        uint8 b = arachyl.b();
-        require(
-            arachyls.length == b &&
-            v.length == b && 
-            r.length == b && 
-            s.length == b, "NOT_THRESHOLD"
-        );
-
-        uint state = 1;
-
-        for (uint8 i = 0; i < b; i++) {
-            require(arachyls[i] != address(0), "ZERO_ADDRESS");            
-            require(!creationVerifiers[arachyls[i]], "DUPLICATE_ARACHYL");
-            require(arachyl.verifiers(arachyls[i]), "NOT_ARACHYL");
-            creationVerifiers[arachyls[i]] = true;
-
-            // Signature checking against
-            // this contract address
-            bytes32 _messageNoPrefix = keccak256(abi.encodePacked(address(this), state));
-      	    bytes32 _message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageNoPrefix));
-      	    address _recover = ecrecover(_message, v[i], r[i], s[i]);
-      	    require(_recover == arachyls[i],  "SIG");
-        }
+        require(arachyl.verifiers(msg.sender), "NOT_ARACHYL");
 
         _cleanCreation();
 
         _firstMint();
 
-        address feeVault = ArachylInterface(factory).feeVault();
-        FeeVaultInterface vault = FeeVaultInterface(feeVault);
-        vault.rewardPairCreation(arachyls);
+        // address feeVault = ArachylInterface(factory).feeVault();
+        // FeeVaultInterface vault = FeeVaultInterface(feeVault);
+        // vault.rewardPairCreation(arachyls);
 
         emit Created();
     }
@@ -235,34 +213,12 @@ contract Pair is UniswapV2ERC20, PairInterface {
     }
 
     // this low-level function should be called from a contract which performs important safety checks
-    function approveMint(address to, address[] calldata arachyls, uint8[] calldata v, bytes32[] calldata r, bytes32[] calldata s) public lock returns (uint liquidity) {
+    function approveMint(address to) public lock {
         require(initiatedAdditions[to].amount0 > 0, "NOT_INITIATED");
 
         ArachylInterface arachyl = ArachylInterface(factory);
 
-        uint8 b = arachyl.b();
-        require(
-            arachyls.length == b &&
-            v.length == b && 
-            r.length == b && 
-            s.length == b, "NOT_THRESHOLD"
-        );
-
-        uint nonce = initiatedAdditions[to].nonce;
-
-        for (uint8 i = 0; i < b; i++) {
-            require(arachyls[i] != address(0), "ZERO_ADDRESS");            
-            require(!initiationVerifiers[to][nonce][arachyls[i]], "DUPLICATE_ARACHYL");
-            require(arachyl.verifiers(arachyls[i]), "NOT_ARACHYL");
-            initiationVerifiers[to][nonce][arachyls[i]] = true;
-
-            // Signature checking against
-            // this contract address
-            bytes32 _messageNoPrefix = keccak256(abi.encodePacked(address(this), to, nonce, APPROVE_STATE));
-      	    bytes32 _message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageNoPrefix));
-      	    address _recover = ecrecover(_message, v[i], r[i], s[i]);
-      	    require(_recover == arachyls[i],  "SIG");
-        }
+        require(arachyl.verifiers(msg.sender), "NOT_ARACHYL");
 
         _mint(to, initiatedAdditions[to].liquidity);
 
@@ -270,9 +226,9 @@ contract Pair is UniswapV2ERC20, PairInterface {
         initiatedAdditions[to].amount1 = 0;
         initiatedAdditions[to].liquidity = 0;
 
-        address feeVault = ArachylInterface(factory).feeVault();
-        FeeVaultInterface vault = FeeVaultInterface(feeVault);
-        vault.rewardAddLiquidity(arachyls);
+        // address feeVault = ArachylInterface(factory).feeVault();
+        // FeeVaultInterface vault = FeeVaultInterface(feeVault);
+        // vault.rewardAddLiquidity();
     }
 
     function initBurn(uint amount, address to) external lock returns (uint amount0, uint amount1) {
@@ -288,16 +244,19 @@ contract Pair is UniswapV2ERC20, PairInterface {
         uint liquidity = balanceOf[address(this)].mul(2);
 
         bool feeOn = _mintFee(_reserve0, _reserve1);
+        require(IERC20(address(this)).balanceOf(address(this)) >= amount, "NOT_ENOUGH_BALANCE");
         uint _totalSupply = totalSupply.mul(2); // gas savings, must be defined here since totalSupply can update in _mintFee
         amount0 = liquidity.mul(balance0) / _totalSupply; // using balances ensures pro-rata distribution
         amount1 = liquidity.mul(balance1) / _totalSupply; // using balances ensures pro-rata distribution
         require(amount0 > 0 && amount1 > 0, 'UniswapV2: INSUFFICIENT_LIQUIDITY_BURNED');
-        initiatedRemovals[to].liquidity = liquidity.div(2);
+        initiatedRemovals[to].liquidity = amount;
         _safeTransfer(_token0, to, amount0);
         // _safeTransfer(_token1, to, amount1);
         balance0 = IERC20(_token0).balanceOf(address(this));
-        balance1 = _reserve1.sub(amount1);
+        balance1 = _reserve1 - amount1;
         // balance1 = IERC20(_token1).balanceOf(address(this));
+
+        // todo lock some token
 
         _update(balance0, balance1, _reserve0, _reserve1);
         if (feeOn) kLast = uint(reserve0).mul(reserve1); // reserve0 and reserve1 are up-to-date
@@ -305,73 +264,28 @@ contract Pair is UniswapV2ERC20, PairInterface {
     }
 
     // this low-level function should be called from a contract which performs important safety checks
-    function approveBurn(address to, address[] calldata arachyls, uint8[] calldata v, bytes32[] calldata r, bytes32[] calldata s) external lock returns (uint amount0, uint amount1) {
+    function approveBurn(address to) external lock returns (uint amount0, uint amount1) {
         require(initiatedRemovals[to].liquidity > 0, "IN_BURNING_PROCESS");
 
         ArachylInterface arachyl = ArachylInterface(factory);
+        require(arachyl.verifiers(msg.sender), "NOT_ARACHYL");
 
-        uint8 b = arachyl.b();
-        require(
-            arachyls.length == b &&
-            v.length == b && 
-            r.length == b && 
-            s.length == b, "NOT_THRESHOLD"
-        );
-
-        uint nonce = initiatedAdditions[to].nonce;
-
-        for (uint8 i = 0; i < b; i++) {
-            require(arachyls[i] != address(0), "ZERO_ADDRESS");            
-            require(!initiationVerifiers[to][nonce][arachyls[i]], "DUPLICATE_ARACHYL");
-            require(arachyl.verifiers(arachyls[i]), "NOT_ARACHYL");
-            initiationVerifiers[to][nonce][arachyls[i]] = true;
-
-            // Signature checking against
-            // this contract address
-            bytes32 _messageNoPrefix = keccak256(abi.encodePacked(address(this), to, nonce, APPROVE_STATE));
-      	    bytes32 _message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageNoPrefix));
-      	    address _recover = ecrecover(_message, v[i], r[i], s[i]);
-      	    require(_recover == arachyls[i],  "SIG");
-        }
-
-        
         _burn(address(this), initiatedRemovals[to].liquidity);
 
         initiatedRemovals[to].liquidity = 0;
 
-        address feeVault = ArachylInterface(factory).feeVault();
-        FeeVaultInterface vault = FeeVaultInterface(feeVault);
-        vault.rewardAddLiquidity(arachyls);
+        // address feeVault = ArachylInterface(factory).feeVault();
+        // FeeVaultInterface vault = FeeVaultInterface(feeVault);
+        // vault.rewardAddLiquidity(arachyls);
 
         emit Burn(to, amount0, amount1, to);
     }
 
-    function revokeBurn(address to, address[] calldata arachyls, uint8[] calldata v, bytes32[] calldata r, bytes32[] calldata s) external override {
+    function revokeBurn(address to) external override {
         require(pendingCreation, "already confirmed");
 
         ArachylInterface arachyl = ArachylInterface(factory);
-
-        uint8 b = arachyl.b();
-        require(
-            arachyls.length == b &&
-            v.length == b && 
-            r.length == b && 
-            s.length == b, "NOT_THRESHOLD"
-        );
-
-        for (uint8 i = 0; i < b; i++) {
-            require(arachyls[i] != address(0), "ZERO_ADDRESS");            
-            require(!initiationVerifiers[to][nonce][arachyls[i]], "DUPLICATE_ARACHYL");
-            require(arachyl.verifiers(arachyls[i]), "NOT_ARACHYL");
-            initiationVerifiers[to][nonce][arachyls[i]] = true;
-
-            // Signature checking against
-            // this contract address
-            bytes32 _messageNoPrefix = keccak256(abi.encodePacked(address(this), to, nonce, REVOKE_STATE));
-      	    bytes32 _message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageNoPrefix));
-      	    address _recover = ecrecover(_message, v[i], r[i], s[i]);
-      	    require(_recover == arachyls[i],  "SIG");
-        }
+        require(arachyl.verifiers(msg.sender), "NOT_ARACHYL");
 
         // disagreement among the verifiers. Therefore this verification failed.
         // cancel the creation, and let user start from the beginning.
@@ -380,39 +294,18 @@ contract Pair is UniswapV2ERC20, PairInterface {
 
         // todo call mint function
 
-        address feeVault = ArachylInterface(factory).feeVault();
-        FeeVaultInterface vault = FeeVaultInterface(feeVault);
-        vault.rewardAddLiquidity(arachyls);
+        // address feeVault = ArachylInterface(factory).feeVault();
+        // FeeVaultInterface vault = FeeVaultInterface(feeVault);
+        // vault.rewardAddLiquidity(arachyls);
 
         initiatedRemovals[to].liquidity = 0;
     }
 
-    function revokeMint(address to, address[] calldata arachyls, uint8[] calldata v, bytes32[] calldata r, bytes32[] calldata s) external override {
+    function revokeMint(address to) external override {
         require(pendingCreation, "already confirmed");
 
         ArachylInterface arachyl = ArachylInterface(factory);
-
-        uint8 b = arachyl.b();
-        require(
-            arachyls.length == b &&
-            v.length == b && 
-            r.length == b && 
-            s.length == b, "NOT_THRESHOLD"
-        );
-
-        for (uint8 i = 0; i < b; i++) {
-            require(arachyls[i] != address(0), "ZERO_ADDRESS");            
-            require(!initiationVerifiers[to][nonce][arachyls[i]], "DUPLICATE_ARACHYL");
-            require(arachyl.verifiers(arachyls[i]), "NOT_ARACHYL");
-            initiationVerifiers[to][nonce][arachyls[i]] = true;
-
-            // Signature checking against
-            // this contract address
-            bytes32 _messageNoPrefix = keccak256(abi.encodePacked(address(this), to, nonce, REVOKE_STATE));
-      	    bytes32 _message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageNoPrefix));
-      	    address _recover = ecrecover(_message, v[i], r[i], s[i]);
-      	    require(_recover == arachyls[i],  "SIG");
-        }
+        require(arachyl.verifiers(msg.sender), "NOT_ARACHYL");
 
         // disagreement among the verifiers. Therefore this verification failed.
         // cancel the creation, and let user start from the beginning.
@@ -421,52 +314,32 @@ contract Pair is UniswapV2ERC20, PairInterface {
 
         // todo call burn function
 
-        address feeVault = ArachylInterface(factory).feeVault();
-        FeeVaultInterface vault = FeeVaultInterface(feeVault);
-        vault.rewardAddLiquidity(arachyls);
+        //     address feeVault = ArachylInterface(factory).feeVault();
+        //     FeeVaultInterface vault = FeeVaultInterface(feeVault);
+        //     vault.rewardAddLiquidity(arachyls);
 
         initiatedAdditions[to].amount0 = 0;
         initiatedAdditions[to].amount1 = 0;
         initiatedAdditions[to].liquidity = 0;
     }
 
-    function revokeCreation(address[] calldata arachyls, uint8[] calldata v, bytes32[] calldata r, bytes32[] calldata s) external override {
+    function revokeCreation() external override {
         require(pendingCreation, "already confirmed");
 
         ArachylInterface arachyl = ArachylInterface(factory);
 
-        uint8 b = arachyl.b();
-        require(
-            arachyls.length == b &&
-            v.length == b && 
-            r.length == b && 
-            s.length == b, "NOT_THRESHOLD"
-        );
-
         uint state = 2;
 
-        for (uint8 i = 0; i < b; i++) {
-            require(arachyls[i] != address(0), "ZERO_ADDRESS");            
-            require(!creationVerifiers[arachyls[i]], "DUPLICATE_ARACHYL");
-            require(arachyl.verifiers(arachyls[i]), "NOT_ARACHYL");
-            creationVerifiers[arachyls[i]] = true;
-
-            // Signature checking against
-            // this contract address
-            bytes32 _messageNoPrefix = keccak256(abi.encodePacked(address(this), state));
-      	    bytes32 _message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageNoPrefix));
-      	    address _recover = ecrecover(_message, v[i], r[i], s[i]);
-      	    require(_recover == arachyls[i],  "SIG");
-        }
+        require(arachyl.verifiers(msg.sender), "NOT_ARACHYL");
 
         // disagreement among the verifiers. Therefore this verification failed.
         // cancel the creation, and let user start from the beginning.
 
         _transferBack();
 
-        address feeVault = ArachylInterface(factory).feeVault();
-        FeeVaultInterface vault = FeeVaultInterface(feeVault);
-        vault.rewardPairCreation(arachyls);
+        // address feeVault = ArachylInterface(factory).feeVault();
+        // FeeVaultInterface vault = FeeVaultInterface(feeVault);
+        // vault.rewardPairCreation(arachyls);
 
         selfdestruct(FactoryInterface(factory).feeToSetter());
 
