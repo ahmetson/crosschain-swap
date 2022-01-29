@@ -109,7 +109,6 @@ contract Pair is UniswapV2ERC20, PairInterface {
         require(pendingCreation, "already confirmed");
 
         ArachylInterface arachyl = ArachylInterface(factory);
-
         require(arachyl.verifiers(msg.sender), "NOT_ARACHYL");
 
         _cleanCreation();
@@ -140,26 +139,20 @@ contract Pair is UniswapV2ERC20, PairInterface {
         }
     }
 
-
     function _firstMint() internal lock returns (uint liquidity) {
-        uint112 _reserve0 = 0;
-        uint112 _reserve1 = 0;
+        // pass 0 reserve
+        bool feeOn = _mintFee(0, 0);
 
-        uint amount0 = lockedAmounts[0];
-        uint amount1 = lockedAmounts[1];
-
-        bool feeOn = _mintFee(_reserve0, _reserve1);
-
-        // on each network minted half of the liquidity
-        liquidity = Math.sqrt(amount0.mul(amount1)).div(2).sub(MINIMUM_LIQUIDITY);
+        liquidity = Math.sqrt(lockedAmounts[0].mul(lockedAmounts[1])).sub(MINIMUM_LIQUIDITY);
         _mint(address(0), MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens
 
         require(liquidity > 0, 'UniswapV2: INSUFFICIENT_LIQUIDITY_MINTED');
         _mint(creator, liquidity);
 
-        _update(amount0, amount1, _reserve0, _reserve1);
+        // pass 0 reserve
+        _update(lockedAmounts[0], lockedAmounts[1], 0, 0);
         if (feeOn) kLast = uint(reserve0).mul(reserve1); // reserve0 and reserve1 are up-to-date
-        emit Mint(msg.sender, amount0, amount1);
+        emit Mint(msg.sender, lockedAmounts[0], lockedAmounts[1]);
     }
 
     // update reserves and, on the first call per block, price accumulators
