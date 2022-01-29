@@ -175,23 +175,25 @@ contract Pair is UniswapV2ERC20, PairInterface {
     // revokeBurn function too.
     function initializeMint(uint amount0, uint amount1) public lock returns (uint liquidity) {
         require(pendingCreation == false, "CREATION_NOT_APPROVED");
-        require(amount0 > 0 && amount1 > 0, "ZERO_AMOUNT");
         require(initiatedAdditions[msg.sender].amount0 == 0 && initiatedAdditions[msg.sender].amount1 == 0, "ALREADY_INITIATED");
         require(initiatedRemovals[msg.sender].liquidity == 0, "IN_BURNING_PROCESS");
+        require(amount0 > 0 && amount1 > 0, "ZERO_AMOUNT");
 
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
+
+        uint preBalance = IERC20(thisToken).balanceOf(address(this));
 
         require(IERC20(thisToken).transferFrom(msg.sender, address(this), amount0), "FAILED_TO_TRANSFER_TOKEN");
 
         uint balance0 = IERC20(thisToken).balanceOf(address(this));
+        require(balance0.sub(preBalance) == amount0, "DEFLETIONARY_TOKEN"); // def token not supported
         uint balance1 = _reserve1 + amount1;
 
         bool feeOn = _mintFee(_reserve0, _reserve1);
-        uint _totalSupply = totalSupply.mul(2);
+        uint _totalSupply = totalSupply;
         liquidity = Math.min(amount0.mul(_totalSupply) / _reserve0, amount1.mul(_totalSupply) / _reserve1);
 
         require(liquidity > 0, 'UniswapV2: INSUFFICIENT_LIQUIDITY_MINTED');
-        liquidity = liquidity.div(2);
 
         uint nonce = initiatedAdditions[msg.sender].nonce + 1;
         initiatedAdditions[msg.sender] = InitiatedAddition(amount0, amount1, liquidity, nonce);
