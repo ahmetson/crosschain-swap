@@ -41,19 +41,13 @@ contract TargetChain is Arachyl {
     //
     // Initiate liquidity addition
     //
-    struct InitiatedAddition {
-        uint amount0;
-        uint amount1;
-        uint liquidity;
-        uint nonce;
+    struct WithdrawParams {
+        address token;
+        uint amount;
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
     }
-    struct InitiatedRemoval {
-        uint amount0;
-        uint liquidity;
-        uint nonce;
-    }
-    mapping(address => InitiatedAddition) public initiatedAdditions;
-    mapping(address => InitiatedRemoval) public initiatedRemovals;
 
     mapping(address => uint) public withdrawNonceOf;
 
@@ -64,11 +58,11 @@ contract TargetChain is Arachyl {
     event Deposit(address indexed investor, address indexed token, uint amount);
     event Withdraw(address indexed investor, address indexed token, uint amount, uint withdrawCounter);
 
-    modifier validSig(address token, uint amount, uint8 v, bytes32 r, bytes32 s) {
-        bytes32 _messageNoPrefix = keccak256(abi.encodePacked(withdrawNonceOf[msg.sender], amount, msg.sender, token));
+    modifier validSig(WithdrawParams memory params) { // token, uint amount, uint8 v, bytes32 r, bytes32 s) {
+        bytes32 _messageNoPrefix = keccak256(abi.encodePacked(withdrawNonceOf[msg.sender], params.amount, msg.sender, params.token));
       	bytes32 _message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageNoPrefix));
-      	address _recover = ecrecover(_message, v, r, s);
-        require(verifiers(_recover),  "INVALID_SIG");
+      	address _recover = ecrecover(_message, params.v, params.r, params.s);
+        require(this.verifiers(_recover),  "INVALID_SIG");
         _;
         withdrawNonceOf[msg.sender]++;
     }
@@ -120,18 +114,18 @@ contract TargetChain is Arachyl {
      *
      * User has to get the signature from the Ara blockchain
      */
-    function withdraw(address token, uint amount, uint8 v, bytes32 r, bytes32 s) validSig(v, r, s) external returns(uint) {
-        require(amount > 0 && token != address(0), '0');
+    function withdraw(WithdrawParams memory params) validSig(params) external {
+        // require(params.amount > 0 && params.token != address(0), '0');
 
-        uint preBalance = IERC20(token).balanceOf(address(this));
+        uint preBalance = IERC20(params.token).balanceOf(address(this));
 
-        _safeTransfer(token, msg.sender, amount);
+        _safeTransfer(params.token, msg.sender, params.amount);
 
-        uint postBalance = IERC20(token).balanceOf(address(this));
+        uint postBalance = IERC20(params.token).balanceOf(address(this));
 
-        amount = postBalance.sub(preBalance);
+        params.amount = postBalance.sub(preBalance);
 
-        emit Withdraw(msg.sender, token, amount, withdrawNonceOf[msg.sender]);
+        emit Withdraw(msg.sender, params.token, params.amount, withdrawNonceOf[msg.sender]);
     }
 
     function _safeTransfer(address token, address to, uint value) private {

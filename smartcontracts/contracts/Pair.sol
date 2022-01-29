@@ -25,29 +25,22 @@ contract Pair is UniswapV2ERC20, PairInterface {
     address public override thisToken;
     address public override targetToken;
 
-    bool    public override pendingCreation;
-    address public override creator;
-    uint[2] public override lockedAmounts;               // Initial lockedAmounts tokens. till approvement
-
-    mapping(address => bool) creationVerifiers;     // verified
-    mapping(address => mapping(uint => mapping(address => bool))) initiationVerifiers;
-
-    //
-    // Initiate liquidity addition
-    //
-    struct InitiatedAddition {
+    struct MintParams {
         uint amount0;
         uint amount1;
-        uint liquidity;
-        uint nonce;
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
     }
-    struct InitiatedRemoval {
-        uint amount0;
-        uint liquidity;
-        uint nonce;
+    struct SwapParams {
+        uint amount0Out;
+        uint amount1Out;
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
     }
-    mapping(address => InitiatedAddition) public initiatedAdditions;
-    mapping(address => InitiatedRemoval) public initiatedRemovals;
+
+    mapping(address => uint) public nonceOf;
 
     uint112 private reserve0;           // uses single storage slot, accessible via getReserves
     uint112 private reserve1;           // uses single storage slot, accessible via getReserves
@@ -76,44 +69,54 @@ contract Pair is UniswapV2ERC20, PairInterface {
         require(success && (data.length == 0 || abi.decode(data, (bool))), 'UniswapV2: TRANSFER_FAILED');
     }
 
-    event InitMint(address indexed sender, uint amount0, uint amount1, uint liq);
-    event Mint(address indexed sender, uint amount0, uint amount1);
-    event Burn(address indexed sender, uint amount0, uint amount1, address indexed to);
-    event Swap(address indexed sender, uint amount0In, uint amount1In, uint amount0Out, uint amount1Out, address indexed to);
+    event Mint(address indexed sender, uint amount0, uint amount1, uint liq);
+    event Burn(address indexed to, uint amount0, uint amount1, uint liq);
+    event Swap(address indexed to, uint[4] amounts);
     event Sync(uint112 reserve0, uint112 reserve1);
     event Created();
     event Destroyed();
+
+    modifier validMintSig(MintParams memory params) {
+        bytes32 _messageNoPrefix = keccak256(abi.encodePacked(nonceOf[msg.sender], params.amount0, params.amount1, msg.sender));
+      	bytes32 _message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageNoPrefix));
+      	address _recover = ecrecover(_message, params.v, params.r, params.s);
+
+        ArachylInterface arachyl = ArachylInterface(factory);
+
+        require(arachyl.verifiers(_recover), "NOT_MINT_SIG");
+        _;
+        nonceOf[msg.sender]++;
+    }
+
+    modifier validSwapSig(SwapParams memory params) {
+        bytes32 _messageNoPrefix = keccak256(abi.encodePacked(nonceOf[msg.sender], params.amount0Out, params.amount1Out, msg.sender));
+      	bytes32 _message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageNoPrefix));
+      	address _recover = ecrecover(_message, params.v, params.r, params.s);
+
+        ArachylInterface arachyl = ArachylInterface(factory);
+
+        require(arachyl.verifiers(_recover), "NOT_MINT_SIG");
+        _;
+        nonceOf[msg.sender]++;
+    }
 
     constructor() {
         factory = msg.sender;
     }
 
     // called once by the factory at time of deployment
-    // Initialize in the pendingCreation mode that Pair Creation announced.
     // The verifier picks the data, after matching with another part, verifier approves it.
-    function initializeCreation(
+    function create(
         address[2] calldata _tokens,
         uint[2] calldata _amounts,
         address _creator
     ) external override {
         require(msg.sender == factory, 'FORBIDDEN'); // sufficient check
 
-        pendingCreation     = true;
         thisToken           = _tokens[0];
         targetToken         = _tokens[1];
-        lockedAmounts       = _amounts;
-        creator             = _creator;
-    }
 
-    function approveCreation() external override {
-        require(pendingCreation, "already confirmed");
-
-        ArachylInterface arachyl = ArachylInterface(factory);
-        require(arachyl.verifiers(msg.sender), "NOT_ARACHYL");
-
-        _cleanCreation();
-
-        _firstMint();
+        _firstMint(_creator, _amounts[0], _amounts[1]);
 
         emit Created();
     }
@@ -139,20 +142,20 @@ contract Pair is UniswapV2ERC20, PairInterface {
         }
     }
 
-    function _firstMint() internal lock returns (uint liquidity) {
+    function _firstMint(address creator, uint amount0, uint amount1) internal lock returns (uint liquidity) {
         // pass 0 reserve
         bool feeOn = _mintFee(0, 0);
 
-        liquidity = Math.sqrt(lockedAmounts[0].mul(lockedAmounts[1])).sub(MINIMUM_LIQUIDITY);
+        liquidity = Math.sqrt(amount0.mul(amount1)).sub(MINIMUM_LIQUIDITY);
         _mint(address(0), MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens
 
         require(liquidity > 0, 'UniswapV2: INSUFFICIENT_LIQUIDITY_MINTED');
         _mint(creator, liquidity);
 
         // pass 0 reserve
-        _update(lockedAmounts[0], lockedAmounts[1], 0, 0);
+        _update(amount0, amount1, 0, 0);
         if (feeOn) kLast = uint(reserve0).mul(reserve1); // reserve0 and reserve1 are up-to-date
-        emit Mint(msg.sender, lockedAmounts[0], lockedAmounts[1]);
+        emit Mint(msg.sender, amount0, amount1, liquidity);
     }
 
     // update reserves and, on the first call per block, price accumulators
@@ -171,164 +174,106 @@ contract Pair is UniswapV2ERC20, PairInterface {
         emit Sync(reserve0, reserve1);
     }
 
-    // todo make mint calculation as a separated function, so that it can be called by
-    // revokeBurn function too.
-    function initializeMint(uint amount0, uint amount1) public lock returns (uint liquidity) {
-        require(pendingCreation == false, "CREATION_NOT_APPROVED");
-        require(initiatedAdditions[msg.sender].amount0 == 0 && initiatedAdditions[msg.sender].amount1 == 0, "ALREADY_INITIATED");
-        require(initiatedRemovals[msg.sender].liquidity == 0, "IN_BURNING_PROCESS");
-        require(amount0 > 0 && amount1 > 0, "ZERO_AMOUNT");
-
+    /// @dev The validation is done by the Signers. We trust them.
+    function mint(MintParams memory params) public 
+        validMintSig(params) 
+        lock 
+        returns 
+        (uint liquidity) 
+    {
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
 
         uint preBalance = IERC20(thisToken).balanceOf(address(this));
 
-        require(IERC20(thisToken).transferFrom(msg.sender, address(this), amount0), "FAILED_TO_TRANSFER_TOKEN");
-
+        require(IERC20(thisToken).transferFrom(msg.sender, address(this), params.amount0), "FAILED_TO_TRANSFER_TOKEN");
         uint balance0 = IERC20(thisToken).balanceOf(address(this));
-        require(balance0.sub(preBalance) == amount0, "DEFLETIONARY_TOKEN"); // def token not supported
-        uint balance1 = _reserve1 + amount1;
+        uint balance1 = _reserve1 + params.amount1;
 
-        bool feeOn = _mintFee(_reserve0, _reserve1);
-        uint _totalSupply = totalSupply;
-        liquidity = Math.min(amount0.mul(_totalSupply) / _reserve0, amount1.mul(_totalSupply) / _reserve1);
+        params.amount0 = balance0.sub(preBalance);
 
+        // todo: need to be sure that user adds exact params
+        // liquidity = Math.min(params.amount0.mul(totalSupply) / _reserve0, params.amount1.mul(totalSupply) / _reserve1);
+        liquidity = params.amount0.mul(totalSupply) / _reserve0;
         require(liquidity > 0, 'UniswapV2: INSUFFICIENT_LIQUIDITY_MINTED');
 
-        uint nonce = initiatedAdditions[msg.sender].nonce + 1;
-        initiatedAdditions[msg.sender] = InitiatedAddition(amount0, amount1, liquidity, nonce);
+        bool feeOn = _mintFee(_reserve0, _reserve1);
+
+        _mint(msg.sender, liquidity);
 
         _update(balance0, balance1, _reserve0, _reserve1);
         if (feeOn) kLast = uint(reserve0).mul(reserve1); // reserve0 and reserve1 are up-to-date
-        emit InitMint(msg.sender, amount0, amount1, liquidity);
+        emit Mint(msg.sender, params.amount0, params.amount1, liquidity);
     }
 
-    // this low-level function should be called from a contract which performs important safety checks
-    function approveMint(address to) public lock {
-        require(initiatedAdditions[to].amount0 > 0, "NOT_INITIATED");
-
-        ArachylInterface arachyl = ArachylInterface(factory);
-
-        require(arachyl.verifiers(msg.sender), "NOT_ARACHYL");
-
-        _mint(to, initiatedAdditions[to].liquidity);
-
-        initiatedAdditions[to].amount0 = 0;
-        initiatedAdditions[to].amount1 = 0;
-        initiatedAdditions[to].liquidity = 0;
-    }
-
-    function initBurn(uint amount, address to) external lock returns (uint amount0, uint amount1) {
-        require(pendingCreation == false, "CREATION_NOT_APPROVED");
-        require(initiatedAdditions[msg.sender].amount0 == 0 && initiatedAdditions[msg.sender].amount1 == 0, "ALREADY_INITIATED");
-        require(initiatedRemovals[msg.sender].liquidity == 0, "IN_BURNING_PROCESS");
+    // Need to call another function after this one. Since Burning will calculate the amount that user can withdraw.
+    function burn(uint amount) external lock returns (uint amount0, uint amount1) {
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
-        address _token0 = thisToken;                                // gas savings
-        uint balance0 = IERC20(_token0).balanceOf(address(this));
-        uint balance1 = _reserve1;
-        uint liquidity = balanceOf[address(this)].mul(2);
 
-        bool feeOn = _mintFee(_reserve0, _reserve1);
-        require(IERC20(address(this)).balanceOf(address(this)) >= amount, "NOT_ENOUGH_BALANCE");
-        uint _totalSupply = totalSupply.mul(2); // gas savings, must be defined here since totalSupply can update in _mintFee
+        // transfer into the contract
+        this.transferFrom(msg.sender, address(this), amount);
+
+        uint balance0       = IERC20(thisToken).balanceOf(address(this));
+        uint balance1       = _reserve1;
+
+        uint liquidity      = balanceOf[address(this)];
+
+        bool feeOn          = _mintFee(_reserve0, _reserve1);
+
+        uint _totalSupply   = totalSupply; // gas savings, must be defined here since totalSupply can update in _mintFee
+
         amount0 = liquidity.mul(balance0) / _totalSupply; // using balances ensures pro-rata distribution
         amount1 = liquidity.mul(balance1) / _totalSupply; // using balances ensures pro-rata distribution
         require(amount0 > 0 && amount1 > 0, 'UniswapV2: INSUFFICIENT_LIQUIDITY_BURNED');
-        initiatedRemovals[to].liquidity = amount;
-        _safeTransfer(_token0, to, amount0);
-        // _safeTransfer(_token1, to, amount1);
-        balance0 = IERC20(_token0).balanceOf(address(this));
-        balance1 = _reserve1 - amount1;
 
-        // todo lock some token
+        _burn(address(this), amount);
+
+        uint preBalance     = IERC20(thisToken).balanceOf(address(this));
+
+        _safeTransfer(thisToken, msg.sender, amount0);
+
+        uint postBalance     = IERC20(thisToken).balanceOf(address(this));
+
+        amount0 = postBalance.sub(preBalance);
+
+        balance0 = IERC20(thisToken).balanceOf(address(this));
+        balance1 = uint(_reserve1).sub(amount1);                // todo make sure that token is not deflationary token
 
         _update(balance0, balance1, _reserve0, _reserve1);
         if (feeOn) kLast = uint(reserve0).mul(reserve1); // reserve0 and reserve1 are up-to-date
-        emit Burn(msg.sender, amount0, amount1, to);
+        emit Burn(msg.sender, amount0, amount1, amount);
     }
 
     // this low-level function should be called from a contract which performs important safety checks
-    function approveBurn(address to) external lock returns (uint amount0, uint amount1) {
-        require(initiatedRemovals[to].liquidity > 0, "IN_BURNING_PROCESS");
-
-        ArachylInterface arachyl = ArachylInterface(factory);
-        require(arachyl.verifiers(msg.sender), "NOT_ARACHYL");
-
-        _burn(address(this), initiatedRemovals[to].liquidity);
-
-        initiatedRemovals[to].liquidity = 0;
-
-        emit Burn(to, amount0, amount1, to);
-    }
-
-    function revokeBurn(address to) external override {
-        require(pendingCreation, "already confirmed");
-
-        ArachylInterface arachyl = ArachylInterface(factory);
-        require(arachyl.verifiers(msg.sender), "NOT_ARACHYL");
-
-        // disagreement among the verifiers. Therefore this verification failed.
-        // cancel the creation, and let user start from the beginning.
-
-        require(IERC20(thisToken).transferFrom(address(this), to, initiatedRemovals[to].amount0), "FAILED_TO_TRANSFER_TOKEN");
-
-        // todo call mint function
-
-        initiatedRemovals[to].liquidity = 0;
-    }
-
-    function revokeMint(address to) external override {
-        require(pendingCreation, "already confirmed");
-
-        ArachylInterface arachyl = ArachylInterface(factory);
-        require(arachyl.verifiers(msg.sender), "NOT_ARACHYL");
-
-        // disagreement among the verifiers. Therefore this verification failed.
-        // cancel the creation, and let user start from the beginning.
-
-        require(IERC20(thisToken).transferFrom(address(this), to, initiatedAdditions[to].amount0), "FAILED_TO_TRANSFER_TOKEN");
-
-        // todo call burn function
-
-        initiatedAdditions[to].amount0 = 0;
-        initiatedAdditions[to].amount1 = 0;
-        initiatedAdditions[to].liquidity = 0;
-    }
-
-    function revokeCreation() external override {
-        require(pendingCreation, "already confirmed");
-
-        ArachylInterface arachyl = ArachylInterface(factory);
-
-        require(arachyl.verifiers(msg.sender), "NOT_ARACHYL");
-
-        _transferBack();
-
-        selfdestruct(FactoryInterface(factory).feeToSetter());
-
-        _cleanCreation();
-    }
-
-    // this low-level function should be called from a contract which performs important safety checks
-    function initSwap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external lock {
-        require(amount0Out > 0 || amount1Out > 0, 'UniswapV2: INSUFFICIENT_OUTPUT_AMOUNT');
+    function swap(SwapParams memory params) ///, bytes calldata data) enabling data will cause stack too depp
+        external
+        validSwapSig(params) 
+        lock 
+    {
+        // require(params.amount0Out > 0 || params.amount1Out > 0, 'UniswapV2: INSUFFICIENT_OUTPUT_AMOUNT');
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
-        require(amount0Out < _reserve0 && amount1Out < _reserve1, 'UniswapV2: INSUFFICIENT_LIQUIDITY');
+        // require(params.amount0Out < _reserve0 && params.amount1Out < _reserve1, 'UniswapV2: INSUFFICIENT_LIQUIDITY');
 
         uint balance0;
-        uint balance1 = _reserve1 - amount1Out;
+        uint balance1 = _reserve1 - params.amount1Out; // = _reserve1 - amount1Out; defleationary token might cause an issue
         { // scope for _token{0,1}, avoids stack too deep errors
-        address _token0 = thisToken;
-        // address _token1 = token1;
-        require(to != _token0 && to != targetToken, 'UniswapV2: INVALID_TO');
-        if (amount0Out > 0) _safeTransfer(_token0, to, amount0Out); // optimistically transfer tokens
-        // if (amount1Out > 0) _safeTransfer(_token1, to, amount1Out); // optimistically transfer tokens
-        if (data.length > 0) IUniswapV2Callee(to).uniswapV2Call(msg.sender, amount0Out, amount1Out, data);
-        balance0 = IERC20(_token0).balanceOf(address(this));
-        // balance1 = IERC20(_token1).balanceOf(address(this));
+
+        require(msg.sender != thisToken && msg.sender != targetToken, 'INVALID_TO');
+
+        if (params.amount0Out > 0) {
+            uint preBalance = IERC20(thisToken).balanceOf(address(this));
+            _safeTransfer(thisToken, msg.sender, params.amount0Out); // optimistically transfer tokens
+
+            params.amount0Out = IERC20(thisToken).balanceOf(address(this)).sub(preBalance);
         }
-        uint amount0In = balance0 > _reserve0 - amount0Out ? balance0 - (_reserve0 - amount0Out) : 0;
-        uint amount1In = balance1 > _reserve1 - amount1Out ? balance1 - (_reserve1 - amount1Out) : 0;
+
+        // if (data.length > 0) {
+            // IUniswapV2Callee(msg.sender).uniswapV2Call(msg.sender, params.amount0Out, params.amount1Out, data);
+        // }
+        
+        balance0 = IERC20(thisToken).balanceOf(address(this));
+        }
+        uint amount0In = balance0 > _reserve0 - params.amount0Out ? balance0 - (_reserve0 - params.amount0Out) : 0;
+        uint amount1In = balance1 > _reserve1 - params.amount1Out ? balance1 - (_reserve1 - params.amount1Out) : 0;
         require(amount0In > 0 || amount1In > 0, 'UniswapV2: INSUFFICIENT_INPUT_AMOUNT');
         { // scope for reserve{0,1}Adjusted, avoids stack too deep errors
         uint balance0Adjusted = balance0.mul(1000).sub(amount0In.mul(3));
@@ -337,16 +282,6 @@ contract Pair is UniswapV2ERC20, PairInterface {
         }
 
         _update(balance0, balance1, _reserve0, _reserve1);
-        emit Swap(msg.sender, amount0In, amount1In, amount0Out, amount1Out, to);
+        emit Swap(msg.sender, [amount0In, amount1In, params.amount0Out, params.amount1Out]);
     }
-
-    function _transferBack() internal {
-        IERC20(thisToken).transfer(creator, lockedAmounts[0]);
-    }
-
-    function _cleanCreation() internal {
-        pendingCreation = false;
-    }
-
-
 }

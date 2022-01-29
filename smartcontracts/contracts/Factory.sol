@@ -11,11 +11,32 @@ contract Factory is FactoryInterface, Arachyl {
     address         public override feeTo;
     address payable public override feeToSetter;
 
+    bytes4 private constant SELECTOR_FROM = bytes4(keccak256(bytes('transferFrom(address,uint)')));
+
     uint            public override targetChainID;
+
+    struct CreateParams {
+        address[2] tokens; // token 0, token 1
+        uint[2] amounts; // amount 0, amount 1
+        uint8 v; 
+        bytes32 r; 
+        bytes32 s;
+    }
+
+    mapping(address => uint) public depositNonceOf;
 
     // token on this blockchain => token on the target blockchain => pair
     mapping(address => mapping(address => address)) public override getPair;
     address[] public override allPairs;
+
+    modifier validSig(CreateParams memory params) {
+        bytes32 _messageNoPrefix = keccak256(abi.encodePacked(depositNonceOf[msg.sender], params.amounts, msg.sender, params.tokens));
+      	bytes32 _message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageNoPrefix));
+      	address _recover = ecrecover(_message, params.v, params.r, params.s);
+        require(this.verifiers(_recover),  "INVALID_SIG");
+        _;
+        depositNonceOf[msg.sender]++;
+    }
 
     /**
      *  @notice Factory is deployed per blockchain pair.
@@ -72,47 +93,45 @@ contract Factory is FactoryInterface, Arachyl {
 
     /** @notice Create a Token Pair, where one of the token is
      *  on this Blockchain. While another token is on another Blockchain.
-     * 
-     *  @param tokens - first token is the token on this blockchain.
-     *  and second token is the token on the target blockchain.
-     *  @param amounts - amount of tokens to put on this blockchain.
-     *  and second element is the amount on the target blockchain.
      */
-    function initializeCreation(
-        address[2] calldata tokens, // token 0, token 1
-        uint[2] calldata amounts // amount 0, amount 1
-    ) external payable override returns (address) {
-        require(feeVault != address(0), "NO_FEE_VAULT");
-        require(msg.value >= feeUserPairCreation, "NOT_ENOUGH_PAIR_CREATION_FEE");
-        uint thisChainID = block.chainid;
-        require(amounts[0] > 0 && amounts[1] > 0, 'ZERO_AMOUNT');
-        require(tokens[0] != address(0) && tokens[1] != address(0), 'ZERO_ADDRESS');
+    function create(
+        CreateParams memory params
+    ) public validSig(params) payable returns (address) {
+        // require(feeVault != address(0), "NO_FEE_VAULT");
+        // require(msg.value >= feeUserPairCreation, "NOT_ENOUGH_PAIR_CREATION_FEE");
+        // make sure that signature is not generated
+        // require(amounts[0] > 0 && amounts[1] > 0 && tokens[0] != address(0) && tokens[1] != address(0), '0');
+        // require(getPair[tokens[0]][tokens[1]] == address(0), 'PAIR_EXISTS');
 
-        require(getPair[tokens[0]][tokens[1]] == address(0), 'PAIR_EXISTS');
-
-        feeVault.transfer(feeUserPairCreation);
-        if ((msg.value - feeUserPairCreation) > 0) {
-            payable(msg.sender).transfer(msg.value - feeUserPairCreation);
-        }
+        // feeVault.transfer(feeUserPairCreation);
+        // if ((msg.value - feeUserPairCreation) > 0) {
+            // payable(msg.sender).transfer(msg.value - feeUserPairCreation);
+        // }
 
         // Creating the Pair contract
-        bytes32 salt = keccak256(abi.encodePacked(thisChainID, targetChainID, tokens[0], tokens[1]));
-        Pair pairInstance = new Pair{salt: salt}();
+        Pair pairInstance = new Pair{salt: keccak256(abi.encodePacked(params.tokens))}();
         address pair = address(pairInstance);
 
-        require(IERC20(tokens[0]).transferFrom(msg.sender, pair, amounts[0]), "FAILED_TO_TRANSFER_TOKEN");
+        uint preBalance = IERC20(params.tokens[0]).balanceOf(pair);
+        _safeTransferFrom(params.tokens[0], pair, params.amounts[0]);
+        params.amounts[0] = IERC20(params.tokens[0]).balanceOf(pair) - preBalance;
 
-        Pair(pair).initializeCreation(tokens, amounts, msg.sender);
+        Pair(pair).create(params.tokens, [params.amounts[0], params.amounts[1]], msg.sender);
 
         // populate mapping in the reverse direction
-        getPair[tokens[0]][tokens[1]] = pair;
-        getPair[tokens[1]][tokens[0]] = pair;
+        getPair[params.tokens[0]][params.tokens[1]] = pair;
+        getPair[params.tokens[1]][params.tokens[0]] = pair;
 
         allPairs.push(pair);
         
-        emit PairCreated(tokens[0], tokens[1], pair, allPairs.length);
+        emit PairCreated(params.tokens[0], params.tokens[1], pair, allPairs.length);
 
         return pair;
+    }
+
+    function _safeTransferFrom(address token, address to, uint value) private {
+        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR_FROM, msg.sender, to, value));
+        require(success && (data.length == 0 || abi.decode(data, (bool))), 'TRANSFER_FROM_FAILED');
     }
 
     function setFeeTo(address _feeTo) external override {
