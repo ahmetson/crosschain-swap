@@ -1,37 +1,38 @@
 {
-  "name": "nft-bridge-smartcontract",
+  "name": "xdex-smartcontract",
   "version": "0.0.1",
-  "description": "Trustless Nft Bridge between EVM Compatible blockchains",
+  "description": "Crosschain DEX between EVM Compatible blockchains",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ahmetson/nft-bridge.git"
+    "url": "git+https://github.com/ahmetson/xdex.git"
   },
   "keywords": [
-    "nft-bridge",
-    "ethereum",
+    "xdex-smartcontract",
+    "bridge",
+    "dex",
     "ahmetson"
   ],
   "author": "ahmetson",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ahmetson/nft-bridge/issues"
+    "url": "https://github.com/ahmetson/xdex/issues"
   },
-  "homepage": "https://github.com/ahmetson/nft-bridge#readme",
+  "homepage": "https://github.com/ahmetson/xdex#readme",
   "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "@nomiclabs/hardhat-ethers": "^2.0.4",
     "@nomiclabs/hardhat-etherscan": "^2.1.5",
-    "@nomiclabs/hardhat-waffle": "^2.0.1",
-    "chai": "^4.3.4",
+    "@nomiclabs/hardhat-waffle": "^2.0.2",
+    "chai": "^4.3.6",
     "ethereum-waffle": "^3.4.0",
-    "ethers": "^5.4.5",
-    "hardhat": "^2.6.1"
+    "ethers": "^5.5.3",
+    "hardhat": "^2.8.3"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.3.2",
+    "@openzeppelin/contracts": "^4.4.2",
     "dotenv": "^10.0.0"
   }
 }
