@@ -40,6 +40,19 @@ contract Pair is PairInterface, UniswapV2ERC20 {
         bytes32 r;
         bytes32 s;
     }
+    struct SwapTargetParams {
+        uint amountOut;
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
+    }
+    struct SwapSourceParams {
+        uint amountIn;
+        uint amountOut;
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
+    }
 
     mapping(address => uint) public nonceOf;
 
@@ -91,6 +104,30 @@ contract Pair is PairInterface, UniswapV2ERC20 {
 
     modifier validSwapSig(SwapParams memory params) {
         bytes32 _messageNoPrefix = keccak256(abi.encodePacked(nonceOf[msg.sender], params.amount0Out, params.amount1Out, msg.sender));
+      	bytes32 _message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageNoPrefix));
+      	address _recover = ecrecover(_message, params.v, params.r, params.s);
+
+        ArachylInterface arachyl = ArachylInterface(factory);
+
+        require(arachyl.verifiers(_recover), "NOT_MINT_SIG");
+        _;
+        nonceOf[msg.sender]++;
+    }
+
+    modifier validSwapSourceSig(SwapSourceParams memory params) {
+        bytes32 _messageNoPrefix = keccak256(abi.encodePacked(nonceOf[msg.sender], params.amountIn, params.amountOut, msg.sender));
+      	bytes32 _message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageNoPrefix));
+      	address _recover = ecrecover(_message, params.v, params.r, params.s);
+
+        ArachylInterface arachyl = ArachylInterface(factory);
+
+        require(arachyl.verifiers(_recover), "NOT_MINT_SIG");
+        _;
+        nonceOf[msg.sender]++;
+    }
+
+    modifier validSwapTargetSig(SwapTargetParams memory params) {
+        bytes32 _messageNoPrefix = keccak256(abi.encodePacked(nonceOf[msg.sender], params.amountOut, msg.sender));
       	bytes32 _message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageNoPrefix));
       	address _recover = ecrecover(_message, params.v, params.r, params.s);
 
@@ -247,12 +284,6 @@ contract Pair is PairInterface, UniswapV2ERC20 {
         emit Burn(msg.sender, amount0, amount1, amount);
     }
 
-    // this low-level function should be called from a contract which performs important safety checks
-    // params.amount1Out means user withdraws the token on the target blockchain
-    // params.amount0Out means user withdraws the token on this blockchai
-    //
-    // note, that client should calculate exact amount out
-    // on uniswap its done by the periphery contract. maybe to add periphery too?
     function swap(SwapParams memory params) ///, bytes calldata data) enabling data will cause stack too depp
         external
         validSwapSig(params) 
@@ -310,5 +341,112 @@ contract Pair is PairInterface, UniswapV2ERC20 {
 
         _update(balance0, balance1, _reserve0, _reserve1);
         emit Swap(msg.sender, [amount0In, amount1In, params.amount0Out, params.amount1Out]);
+    }
+
+
+    // this low-level function should be called from a contract which performs important safety checks
+    // params.amount1Out means user withdraws the token on the target blockchain
+    // params.amount0Out means user withdraws the token on this blockchai
+    //
+    // note, that client should calculate exact amount out
+    // on uniswap its done by the periphery contract. maybe to add periphery too?
+    //
+    // maybe to accept the amount ins, and calculate the amount out. since while user is passing the 
+    // transaction on another blockchain, the ratio of the tokens in the pair might be changed. so
+    // user's swap in ratio will be unlikely high.
+    // create another swap for source initiated tokens.
+    //
+    // amount in is on source chain
+    // amount out is on the target chain
+    // 
+    // this method doesn't require a validation.
+    function swapToTarget(SwapTargetParams memory params) ///, bytes calldata data) enabling data will cause stack too depp
+        external
+        /// validSwapTargetSig(params) 
+        lock 
+    {
+        // require(params.amount0Out > 0 || params.amount1Out > 0, 'UniswapV2: INSUFFICIENT_OUTPUT_AMOUNT');
+        require(params.amountOut > 0, "BOTH_SIDE_SWAP");
+
+
+        (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
+        // require(params.amount0Out < _reserve0 && params.amount1Out < _reserve1, 'UniswapV2: INSUFFICIENT_LIQUIDITY');
+
+
+        uint balance0;
+        uint amount0In;
+        // test that token is not defletionary
+        uint balance1 = _reserve1 - params.amountOut; // = _reserve1 - amount1Out; defleationary token might cause an issue
+
+        // require(msg.sender != thisToken && msg.sender != targetToken, 'INVALID_TO');
+        {
+        // swapping token on this blockchain to the token on another chain?
+        // great, transfer into this contract the tokens from the user on this blockchain.
+        // calculating amount in on source blockchain
+        uint numerator = uint(_reserve0).mul(params.amountOut).mul(1000);    // reserve in
+        uint denominator = uint(_reserve1).sub(params.amountOut).mul(997);       // reserve out
+        amount0In = (numerator / denominator).add(1);
+        require(amount0In > 0, 'UniswapV2: INSUFFICIENT_INPUT_AMOUNT');
+
+        // deflationary token
+        IERC20(thisToken).transferFrom(msg.sender, address(this), amount0In);
+        // if (data.length > 0) {
+            // IUniswapV2Callee(msg.sender).uniswapV2Call(msg.sender, params.amount0Out, params.amount1Out, data);
+        // }
+        
+        balance0 = IERC20(thisToken).balanceOf(address(this));
+        }
+
+        { // scope for reserve{0,1}Adjusted, avoids stack too deep errors
+        uint balance0Adjusted = balance0.mul(1000).sub(amount0In.mul(3));
+        uint balance1Adjusted = balance1.mul(1000);
+        require(balance0Adjusted.mul(balance1Adjusted) >= uint(_reserve0).mul(_reserve1).mul(1000**2), 'UniswapV2: K');
+        }
+
+        _update(balance0, balance1, _reserve0, _reserve1);
+        emit Swap(msg.sender, [amount0In, 0, 0, params.amountOut]);
+    }
+
+    // amount in is on the target chain
+    // amount out is on the source chain
+    // the process of swapping from target to source, requires TargetChain.deposit first.
+    function swapToSource(SwapSourceParams memory params) ///, bytes calldata data) enabling data will cause stack too depp
+        external
+        validSwapSourceSig(params) 
+        lock 
+    {
+        // require(params.amount0Out > 0 || params.amount1Out > 0, 'UniswapV2: INSUFFICIENT_OUTPUT_AMOUNT');
+        require(params.amountOut > 0, "0");
+
+
+        (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
+        // require(params.amount0Out < _reserve0 && params.amount1Out < _reserve1, 'UniswapV2: INSUFFICIENT_LIQUIDITY');
+
+
+        uint balance0;
+        uint balance1 = _reserve1 - params.amountIn; // = _reserve1 - amount1Out; defleationary token might cause an issue
+        { // scope for _token{0,1}, avoids stack too deep errors
+
+        // require(msg.sender != thisToken && msg.sender != targetToken, 'INVALID_TO');
+
+        uint preBalance = IERC20(thisToken).balanceOf(address(this));
+        IERC20(thisToken).transfer(msg.sender, params.amountOut);
+        params.amountOut = IERC20(thisToken).balanceOf(address(this)).sub(preBalance);
+
+        // if (data.length > 0) {
+            // IUniswapV2Callee(msg.sender).uniswapV2Call(msg.sender, params.amount0Out, params.amount1Out, data);
+        // }
+        
+        balance0 = IERC20(thisToken).balanceOf(address(this));
+        }
+
+        { // scope for reserve{0,1}Adjusted, avoids stack too deep errors
+        uint balance0Adjusted = balance0.mul(1000);//
+        uint balance1Adjusted = balance1.mul(1000).sub(params.amountIn.mul(3));
+        require(balance0Adjusted.mul(balance1Adjusted) >= uint(_reserve0).mul(_reserve1).mul(1000**2), 'UniswapV2: K');
+        }
+
+        _update(balance0, balance1, _reserve0, _reserve1);
+        emit Swap(msg.sender, [0, params.amountIn, params.amountOut, 0]);
     }
 }

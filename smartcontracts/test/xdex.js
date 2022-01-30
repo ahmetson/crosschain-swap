@@ -22,11 +22,6 @@ describe("Xdex smartcontracts test", async () => {
 
     let chainID = null;
 
-    // fees
-    let pairCreationFee = 0;
-    let forArachyls = 0;
-    let gasPrice = 0;
-
     async function signWithdraw(user, token, amount, signer) {
         let withdrawNonce = await targetChain.withdrawNonceOf(user).catch(console.error);
         console.log(`Withdraw nonce of user ${user} is ${withdrawNonce}`);
@@ -72,26 +67,13 @@ describe("Xdex smartcontracts test", async () => {
         return [sig.v, sig.r, sig.s];
     }
 
-    async function signSwap(user, amounts, signer) {
+    async function signTargetSwap(user, amountOut, signer) {
         //v, r, s related stuff
         let nonce = await pair.nonceOf(user).catch(console.error);
 
         // depositNonceOf[msg.sender], params.amounts, msg.sender, params.tokens
-        let bytes32 = utils.defaultAbiCoder.encode(["uint256", "uint256", "uint256"], [nonce, amounts[0], amounts[1]]);
+        let bytes32 = utils.defaultAbiCoder.encode(["uint256", "uint256"], [nonce, amountOut]);
         let str = bytes32 + user.substr(2);
-        let data = utils.keccak256(str);
-        let flatSig = await signer.signMessage(utils.arrayify(data));
-
-        let sig = utils.splitSignature(flatSig);
-
-        return [sig.v, sig.r, sig.s];
-    }
-
-    async function signFee(factoryAddr, prevTimestamp, pairCreation, forArachyls, signer) {
-        // address(this), feeTimestamp, _pairCreation, _forArachyls
-        //v, r, s related stuff
-        let bytes32 = utils.defaultAbiCoder.encode(["uint256", "uint256", "uint256"], [prevTimestamp, pairCreation, forArachyls]);
-        let str = factoryAddr + bytes32.substr(2);
         let data = utils.keccak256(str);
         let flatSig = await signer.signMessage(utils.arrayify(data));
 
@@ -129,23 +111,6 @@ describe("Xdex smartcontracts test", async () => {
         let TargetChain = await ethers.getContractFactory("TargetChain");
         targetChain = await TargetChain.deploy();
         console.log(`Target Chain interface was set to ${targetChain.address}`);
-
-        // Fee Vault - from user to arachyls
-        // const FeeVault = await ethers.getContractFactory("FeeVault");
-        // console.log(`Deploy fee vault with factory ${factory.address}`);
-        // feeVault = await FeeVault.deploy(factory.address);
-
-        // console.log(`Setting Link to Fee Vault in Factory...`);
-        // factory.setFeeVault(feeVault.address);
-        // console.log(`Set successfully!`);
-
-        // const transferTx = await crowns.transfer(player.address, testTokenSupply, {from: gameOwner.address});
-        // await transferTx.wait();
-
-        // const addEditorTx = await tier.addEditor(gameOwner.address, {from: gameOwner.address});
-        // await addEditorTx.wait();
-
-        // expect(await tier.editors(gameOwner.address)).to.be.true;
     });
 
     it("register verifiers", async () => {
@@ -290,101 +255,26 @@ describe("Xdex smartcontracts test", async () => {
 
     it("user swaps token on this blockchain to target blockchain", async () => {
         // parameters
-        let testToken_1_amountOut = utils.parseEther("0");
         let testToken_2_amountOut = utils.parseEther("10");
-        let testToken0            = utils.parseEther("12");
-        let amountOuts = [testToken_1_amountOut, testToken_2_amountOut];
         
-        let sig = await signSwap(accounts[0].address, amountOuts, accounts[1]);
+        let sig = await signTargetSwap(accounts[0].address, testToken_2_amountOut, accounts[1]);
         console.log(`Signature generated`);
 
         let preTest1_balance = await testToken_1.balanceOf(accounts[0].address);
         console.log(`Before swap, user ${accounts[0].address} owned ${preTest1_balance}`);
 
-        // let transTx = await testToken_1.transfer(pair.address, testToken0);
-        // await transTx.wait();
-        // console.log(`Tokens were transferred to Pair contract.`);
-
         let params = [
-            testToken_1_amountOut,
             testToken_2_amountOut,
             sig[0],
             sig[1],
             sig[2]
         ]
 
-        let tx = await pair.swap(params);
+        let tx = await pair.swapToTarget(params);
         await tx.wait();
         console.log(`Token 1 was swapped to token 2.`);
 
         let postTest1_balance = await testToken_1.balanceOf(accounts[0].address);
         console.log(`After swap, user ${accounts[0].address} owned ${postTest1_balance}`);
     });
-
-    // it("approve the creation", async () => {   
-    //     const Pair = await ethers.getContractFactory("Pair");
-    //     pair = await Pair.attach(pairAddr);
-     
-    //     let arachyls = [accounts[1].address, accounts[2].address];
-        
-    //     let sig_1 = await signCreation(pairAddr, 1, accounts[1]);
-    //     let sig_2 = await signCreation(pairAddr, 1, accounts[2]);
-        
-    //     let v = [sig_1[0], sig_2[0]];
-    //     let r = [sig_1[1], sig_2[1]];
-    //     let s = [sig_1[2], sig_2[2]];
-
-    //     let apprCreationTx = await pair.connect(accounts[1]).approveCreation(arachyls, v, r, s);
-    //     await apprCreationTx.wait();
-
-    //     let mintedAmount = await pair.balanceOf(accounts[0].address);
-    //     console.log(`Minted tokens amount for user ${utils.formatEther(mintedAmount)}`)
-    // });
-
-    // it("update fee", async () => {    
-    //     // parameters
-    //     let tokens = [testToken_1.address, testToken_2.address];
-    //     let amounts = [amount_1, amount_2];    
-
-    //     const apprTx = await testToken_1.approve(factory.address, testTokenSupply, {from: accounts[0].address});
-    //     await apprTx.wait();
-    //     console.log(`Approved to spend Test Token 1 by factory`);
-
-    //     gasPrice = await ethers.provider.getGasPrice();
-    //     gasPrice = gasPrice.mul(ethers.BigNumber.from("15"));
-    //     console.log(`Gas Price: ${utils.formatUnits(gasPrice, 'ether')}`);
-
-    //     // actually it should be approveCreation fee.
-    //     pairCreationFee = gasPrice.mul(pairCreationFee).mul(ethers.BigNumber.from("5")).div(ethers.BigNumber.from("10"));
-    //     console.log(`Fee user pair creation: ${utils.formatUnits(pairCreationFee, 'ether')}`);
-        
-    //     let factoryAddr = factory.address;
-    //     let prevTimestamp = await factory.feeTimestamp(); prevTimestamp = parseInt(prevTimestamp);
-
-    //     forArachyls = await factory.feeForArachyls();
-    //     let sig_1 = await signFee(factoryAddr, prevTimestamp, pairCreationFee, forArachyls, accounts[1]);
-    //     let sig_2 = await signFee(factoryAddr, prevTimestamp, pairCreationFee, forArachyls, accounts[2]);
-        
-    //     let arachyls = [accounts[1].address, accounts[2].address];
-
-    //     let v = [sig_1[0], sig_2[0]];
-    //     let r = [sig_1[1], sig_2[1]];
-    //     let s = [sig_1[2], sig_2[2]];
-
-    //     forArachyls = await factory.estimateGas.feeUpdate(pairCreationFee, forArachyls, arachyls, v, r, s);
-    //     forArachyls = gasPrice.mul(forArachyls).div(ethers.BigNumber.from("10"));
-    //     console.log(`Fee update: ${utils.formatUnits(forArachyls, 'ether')}`);
-
-    //     sig_1 = await signFee(factoryAddr, prevTimestamp, pairCreationFee, forArachyls, accounts[1]);
-    //     sig_2 = await signFee(factoryAddr, prevTimestamp, pairCreationFee, forArachyls, accounts[2]);
-
-    //     v = [sig_1[0], sig_2[0]];
-    //     r = [sig_1[1], sig_2[1]];
-    //     s = [sig_1[2], sig_2[2]];
-
-    //     console.log(`Updating fees...`);
-    //     let feeTx = await factory.feeUpdate(pairCreationFee, forArachyls, arachyls, v, r, s);
-    //     await feeTx.wait();
-    //     console.log(`Fee updated!`);
-    // });
 });
