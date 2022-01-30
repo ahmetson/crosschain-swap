@@ -95,7 +95,8 @@ contract TargetChain is Arachyl {
 
         uint preBalance = IERC20(token).balanceOf(address(this));
 
-        _safeTransferFrom(token, msg.sender, amount);
+        IERC20(token).transferFrom(msg.sender, address(this), amount);
+        // _safeTransferFrom(token, msg.sender, amount);
 
         uint postBalance = IERC20(token).balanceOf(address(this));
 
@@ -119,11 +120,12 @@ contract TargetChain is Arachyl {
 
         uint preBalance = IERC20(params.token).balanceOf(address(this));
 
-        _safeTransfer(params.token, msg.sender, params.amount);
+        IERC20(params.token).transfer(msg.sender, params.amount);
+        // _safeTransfer(params.token, msg.sender, params.amount);
 
         uint postBalance = IERC20(params.token).balanceOf(address(this));
 
-        params.amount = postBalance.sub(preBalance);
+        params.amount = preBalance.sub(postBalance);
 
         emit Withdraw(msg.sender, params.token, params.amount, withdrawNonceOf[msg.sender]);
     }

@@ -11,7 +11,8 @@ import './interfaces/ArachylInterface.sol';
 import './interfaces/FeeVaultInterface.sol';
 import './interfaces/IUniswapV2Callee.sol';
 
-contract Pair is UniswapV2ERC20, PairInterface {
+
+contract Pair is PairInterface, UniswapV2ERC20 {
     using SafeMath  for uint;
     using UQ112x112 for uint224;
 
@@ -207,10 +208,12 @@ contract Pair is UniswapV2ERC20, PairInterface {
 
     // Need to call another function after this one. Since Burning will calculate the amount that user can withdraw.
     function burn(uint amount) external lock returns (uint amount0, uint amount1) {
+        require(balanceOf[msg.sender] >= amount, "INVALID_BALANCE");
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
 
         // transfer into the contract
-        this.transferFrom(msg.sender, address(this), amount);
+        // this.transferFrom(msg.sender, address(this), amount);
+        _transfer(msg.sender, address(this), amount);
 
         uint balance0       = IERC20(thisToken).balanceOf(address(this));
         uint balance1       = _reserve1;
@@ -229,14 +232,15 @@ contract Pair is UniswapV2ERC20, PairInterface {
 
         uint preBalance     = IERC20(thisToken).balanceOf(address(this));
 
-        _safeTransfer(thisToken, msg.sender, amount0);
+        IERC20(thisToken).transfer(msg.sender, amount0);
 
         uint postBalance     = IERC20(thisToken).balanceOf(address(this));
 
-        amount0 = postBalance.sub(preBalance);
+        amount0 = preBalance.sub(postBalance);
 
         balance0 = IERC20(thisToken).balanceOf(address(this));
         balance1 = uint(_reserve1).sub(amount1);                // todo make sure that token is not deflationary token
+                                                                // since we deduct it from the server.
 
         _update(balance0, balance1, _reserve0, _reserve1);
         if (feeOn) kLast = uint(reserve0).mul(reserve1); // reserve0 and reserve1 are up-to-date
@@ -244,26 +248,48 @@ contract Pair is UniswapV2ERC20, PairInterface {
     }
 
     // this low-level function should be called from a contract which performs important safety checks
+    // params.amount1Out means user withdraws the token on the target blockchain
+    // params.amount0Out means user withdraws the token on this blockchai
+    //
+    // note, that client should calculate exact amount out
+    // on uniswap its done by the periphery contract. maybe to add periphery too?
     function swap(SwapParams memory params) ///, bytes calldata data) enabling data will cause stack too depp
         external
         validSwapSig(params) 
         lock 
     {
         // require(params.amount0Out > 0 || params.amount1Out > 0, 'UniswapV2: INSUFFICIENT_OUTPUT_AMOUNT');
+        require(params.amount0Out == 0 || params.amount1Out == 0, "BOTH_SIDE_SWAP");
+
+
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
         // require(params.amount0Out < _reserve0 && params.amount1Out < _reserve1, 'UniswapV2: INSUFFICIENT_LIQUIDITY');
+
 
         uint balance0;
         uint balance1 = _reserve1 - params.amount1Out; // = _reserve1 - amount1Out; defleationary token might cause an issue
         { // scope for _token{0,1}, avoids stack too deep errors
 
-        require(msg.sender != thisToken && msg.sender != targetToken, 'INVALID_TO');
+        // require(msg.sender != thisToken && msg.sender != targetToken, 'INVALID_TO');
+
 
         if (params.amount0Out > 0) {
             uint preBalance = IERC20(thisToken).balanceOf(address(this));
-            _safeTransfer(thisToken, msg.sender, params.amount0Out); // optimistically transfer tokens
+            IERC20(thisToken).transfer(msg.sender, params.amount0Out);
+            // _safeTransfer(thisToken, msg.sender, params.amount0Out); // optimistically transfer tokens
 
             params.amount0Out = IERC20(thisToken).balanceOf(address(this)).sub(preBalance);
+        }
+
+        // swapping token on this blockchain to the token on another chain?
+        // great, transfer into this contract the tokens from the user on this blockchain.
+        if (params.amount1Out > 0) {
+            uint numerator = uint(_reserve0).mul(params.amount1Out).mul(1000);    // reserve in
+            uint denominator = uint(_reserve1).sub(params.amount1Out).mul(997);       // reserve out
+            uint amountIn = (numerator / denominator).add(1);
+
+            // deflationary token
+            IERC20(thisToken).transferFrom(msg.sender, address(this), amountIn);
         }
 
         // if (data.length > 0) {
@@ -272,6 +298,7 @@ contract Pair is UniswapV2ERC20, PairInterface {
         
         balance0 = IERC20(thisToken).balanceOf(address(this));
         }
+
         uint amount0In = balance0 > _reserve0 - params.amount0Out ? balance0 - (_reserve0 - params.amount0Out) : 0;
         uint amount1In = balance1 > _reserve1 - params.amount1Out ? balance1 - (_reserve1 - params.amount1Out) : 0;
         require(amount0In > 0 || amount1In > 0, 'UniswapV2: INSUFFICIENT_INPUT_AMOUNT');
