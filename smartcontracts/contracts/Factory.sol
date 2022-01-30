@@ -30,7 +30,7 @@ contract Factory is FactoryInterface, Arachyl {
     address[] public override allPairs;
 
     modifier validSig(CreateParams memory params) {
-        bytes32 _messageNoPrefix = keccak256(abi.encodePacked(depositNonceOf[msg.sender], params.amounts, msg.sender, params.tokens));
+        bytes32 _messageNoPrefix = keccak256(abi.encodePacked(depositNonceOf[msg.sender], params.amounts, msg.sender, params.tokens[0], params.tokens[1]));
       	bytes32 _message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageNoPrefix));
       	address _recover = ecrecover(_message, params.v, params.r, params.s);
         require(this.verifiers(_recover),  "INVALID_SIG");
@@ -78,10 +78,8 @@ contract Factory is FactoryInterface, Arachyl {
         view
         returns (address)
     {
-        uint thisChainID = block.chainid;
-
         // Creating the Pair contract
-        bytes32 salt = keccak256(abi.encodePacked(thisChainID, targetChainID, tokens[0], tokens[1]));
+        bytes32 salt = keccak256(abi.encodePacked(tokens));
 
         bytes32 hash = keccak256(
             abi.encodePacked(bytes1(0xff), address(this), salt, keccak256(getBytecode()))
@@ -113,7 +111,7 @@ contract Factory is FactoryInterface, Arachyl {
         address pair = address(pairInstance);
 
         uint preBalance = IERC20(params.tokens[0]).balanceOf(pair);
-        _safeTransferFrom(params.tokens[0], pair, params.amounts[0]);
+        IERC20(params.tokens[0]).transferFrom(msg.sender, pair, params.amounts[0]);
         params.amounts[0] = IERC20(params.tokens[0]).balanceOf(pair) - preBalance;
 
         Pair(pair).create(params.tokens, [params.amounts[0], params.amounts[1]], msg.sender);
@@ -129,10 +127,6 @@ contract Factory is FactoryInterface, Arachyl {
         return pair;
     }
 
-    function _safeTransferFrom(address token, address to, uint value) private {
-        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR_FROM, msg.sender, to, value));
-        require(success && (data.length == 0 || abi.decode(data, (bool))), 'TRANSFER_FROM_FAILED');
-    }
 
     function setFeeTo(address _feeTo) external override {
         require(msg.sender == feeToSetter, 'FORBIDDEN');
