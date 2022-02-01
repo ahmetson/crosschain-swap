@@ -29,16 +29,15 @@ User passes the following parameters:
     2. source chain id.
     3. target chain id.
     4. source token address.
-    5. target token address.
-    6. source amount.
+    5. source amount.
 
 The Ara mvp does the following checkins:
 - source chain id and target chain id are not the same.
 - the chain pair of source chain and target chain exists.
 - deposit transaction exists on target chain.
+- that its a valid deposit transaction
 - it passed 12 blocks since the deposit.
 - the source token exists on the source chain.
-- the target token exists on the target chain.
 - there is no pair created for source token and target token.
 
 then, Ara mvp gets user's token amount and user's wallet address from the target blockchain.
