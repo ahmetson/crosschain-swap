@@ -17,6 +17,16 @@ const reInit = function(remoteHttp) {
   return new Web3(remoteHttp || process.env.REMOTE_HTTP, options);
 }
 
+const initWeb3 = (chainId) => {
+  if (chainId === process.env.ETH_CHAIN_ID) {
+    return reInit(process.env.ETH_REMOTE_URL);
+  } else if (chainId === process.env.BSC_CHAIN_ID) {
+    return reInit(process.env.BSC_REMOTE_URL);
+  }
+
+  throw `Unsupported chain id ${chainId}`;
+}
+
 const loadContract = function(web3, address, abi) {
   const contract = new web3.eth.Contract(abi, address);
   return contract;
@@ -108,6 +118,7 @@ const oppositeNetwork = function(eventName) {
 module.exports = {
   loadContract,
   reInit,
+  initWeb3,
   nameAndId,
   oppositeNetwork,
   factoryInstance,

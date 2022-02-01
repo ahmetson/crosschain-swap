@@ -38,7 +38,20 @@ let signFee = async (factoryAddr, prevTimestamp, pairCreation, forArachyls, sign
     return sig;
 }
 
+let signCreation = async (nonce, user, amounts, tokens, signer) => {
+    // depositNonceOf[msg.sender], params.amounts, msg.sender, params.tokens
+    let bytes32 = utils.defaultAbiCoder.encode(["uint256", "uint256[2]"], [nonce, amounts]);
+    let str = bytes32 + user.substr(2) + tokens[0].substr(2) + tokens[1].substr(2);
+    let data = utils.keccak256(str);
+    sig = await signer.signMessage(utils.arrayify(data));
+    
+    sig.v = parseInt(sig.v, 16);
+
+    return sig;
+}
+
 module.exports = {
     get,
-    signFee
+    signFee,
+    signCreation
 }
