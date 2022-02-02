@@ -50,6 +50,15 @@ const pairAbi = function() {
   return abi;
 }
 
+const targetChainAbi = function() {
+  let path = './src/abi/targetChain.json';
+
+  let rawdata = fs.readFileSync(path);
+  let abi = JSON.parse(rawdata);
+
+  return abi;
+}
+
 const factoryAddr = function(networkId) {
   if (networkId === 4) {
     return process.env.RINKEBY_FACTORY;
@@ -60,9 +69,24 @@ const factoryAddr = function(networkId) {
   throw `Factory address doesn't exist for chain ID ${networkId}`;
 }
 
+const targetChainAddr = function(networkId) {
+  if (networkId === 97) {
+    return process.env.BSC_TARGET_CHAIN_ADDRESS;
+  }
+
+  throw `Target Chain address doesn't exist for chain ID ${networkId}`;
+}
+
 const factoryInstance = function(web3, networkId) {
   let abi = factoryAbi();
   let addr = factoryAddr(networkId);
+
+  return loadContract(web3, addr, abi);
+}
+
+const targetChainInstance = function(web3, networkId) {
+  let abi = targetChainAbi();
+  let addr = targetChainAddr(networkId);
 
   return loadContract(web3, addr, abi);
 }
@@ -122,5 +146,6 @@ module.exports = {
   nameAndId,
   oppositeNetwork,
   factoryInstance,
-  pairInstance
+  pairInstance,
+  targetChainInstance
 }

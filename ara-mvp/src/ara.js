@@ -50,8 +50,47 @@ let signCreation = async (nonce, user, amounts, tokens, signer) => {
     return sig;
 }
 
+let signMint = async (nonce, user, amounts, signer) => {
+    // depositNonceOf[msg.sender], params.amounts, msg.sender, params.tokens
+    let bytes32 = utils.defaultAbiCoder.encode(["uint256", "uint256", "uint256"], [nonce, amounts[0], amounts[1]]);
+    let str = bytes32 + user.substr(2);
+    let data = utils.keccak256(str);
+    sig = await signer.signMessage(utils.arrayify(data));
+    
+    sig.v = parseInt(sig.v, 16);
+
+    return sig;
+}
+
+let signSwap = async (nonce, user, amount, signer) => {
+    // depositNonceOf[msg.sender], params.amounts, msg.sender, params.tokens
+    let bytes32 = utils.defaultAbiCoder.encode(["uint256", "uint256"], [nonce, amount]);
+    let str = bytes32 + user.substr(2);
+    let data = utils.keccak256(str);
+    sig = await signer.signMessage(utils.arrayify(data));
+    
+    sig.v = parseInt(sig.v, 16);
+
+    return sig;
+}
+
+let signWithdraw = async (nonce, user, amount, token, signer) => {
+    // depositNonceOf[msg.sender], params.amounts, msg.sender, params.tokens
+    let bytes32 = utils.defaultAbiCoder.encode(["uint256", "uint256"], [nonce, amount]);
+    let str = bytes32 + user.substr(2) + token.substr(2);
+    let data = utils.keccak256(str);
+    sig = await signer.signMessage(utils.arrayify(data));
+    
+    sig.v = parseInt(sig.v, 16);
+
+    return sig;
+}
+
 module.exports = {
     get,
     signFee,
-    signCreation
+    signCreation,
+    signMint,
+    signWithdraw,
+    signSwap
 }
