@@ -106,7 +106,6 @@ He passes the following parameters:
     1. Transaction id of the removal.
     2. Source chain id.
     3. Target chain id.
-    4. Pair address.
 
 The Ara MVP does the following validations:
 - source chain id and target chain id are not the same.
@@ -149,7 +148,6 @@ User sends the following parameters:
     2. Source chain id.
     3. Target chain id.
     4. Pair address.
-    5. type of swap as 'TargetToSource'.
     6. amount to swap out on source chain.
 
 The Ara MVP does the following validations:
@@ -182,9 +180,6 @@ User sends the following parameters to the Ara MVP:
     1. Source chain id.
     2. Target chain id.
     3. Pair address.
-    4. type of swap as 'SourceToTarget'.
-    5. amount to swap out on source chain.
-    6. amount to swap in on target chain.
 
 The Ara MVP does the following validations:
 - source chain id and target chain id are not the same.
