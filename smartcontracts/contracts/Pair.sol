@@ -115,7 +115,7 @@ contract Pair is PairInterface, UniswapV2ERC20 {
     }
 
     modifier validSwapSourceSig(SwapSourceParams memory params) {
-        bytes32 _messageNoPrefix = keccak256(abi.encodePacked(nonceOf[msg.sender], params.amountIn, params.amountOut, msg.sender));
+        bytes32 _messageNoPrefix = keccak256(abi.encodePacked(nonceOf[msg.sender], params.amountOut, msg.sender));
       	bytes32 _message = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageNoPrefix));
       	address _recover = ecrecover(_message, params.v, params.r, params.s);
 
