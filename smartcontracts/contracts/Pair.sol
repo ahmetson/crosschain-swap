@@ -84,7 +84,7 @@ contract Pair is PairInterface, UniswapV2ERC20 {
     }
 
     event Mint(address indexed sender, uint amount0, uint amount1, uint liq);
-    event Burn(address indexed to, uint amount0, uint amount1, uint liq);
+    event Burn(address indexed to, uint indexed amount0, uint indexed amount1, uint liq);
     event Swap(address indexed to, uint[4] amounts);
     event Sync(uint112 reserve0, uint112 reserve1);
     event Created();
