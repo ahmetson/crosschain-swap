@@ -1,0 +1,20 @@
+Date: 21:46, 26th January, 2022 (GMT+3), Turkey, Tekirdag, Cherkezkoy.
+
+This document should highlight the business logic of the application.
+As during the development of the project I was stuck with business part.
+
+It is important to think about business logic, since it will atract the investors and users.
+If the project is fine from technical perspective, but from business perspective its limited comparing to the 
+sinle chain dexes, then it will not atract users due to hard user flow.
+
+To think of business flow, or usability (here in the document user experience and business flow are synonims, since 
+it will be profitable if it's easy for users to use),
+we must highlight the following properties of the app.
+
+1. User has to interact with minimal transactions on minimal blockchains.
+2. Transactions should be fast.
+3. Transactions should be cheap.
+4. Users should be able to use LP tokens in any chain.
+5. Users should be able to transfer LP from one chain to another chain.
+6. Investors should be able to lower the Impermanent Loss.
+7. Investors should profit from invested tokens, so they will not go away.

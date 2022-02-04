@@ -1,0 +1,6 @@
+Date: 07:25, 29th January, 2022 (GMT+3), Turkey, Tekirdag, Cherkezkoy.
+
+Need to change the XDEX to allow swaps in one of the blockchains.
+While on another blockchain users are approving tokens.
+
+This way is needed to track slippage parameters. 

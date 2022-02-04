@@ -1,0 +1,11 @@
+Date: 11:57, 27th January, 2022 (GMT+3), Turkey, Tekirdag, Cherkezkoy.
+
+I did the first version of the smartcontract. Its not yet finished code though. I just added the 
+methods with the copied code from Uniswap. Need to adapt to XDEX.
+
+Before adaption, we need to do a change in the architecture that was caused by the addition of the liquidity removing and addition.
+
+The change was caused by the multiple arachyls who passes the signatures to the smartcontract.
+This will cause the stack overflow error. In order to fix it, we allowed call of the functions by 
+one arachyl.
+

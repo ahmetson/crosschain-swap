@@ -1,0 +1,16 @@
+Date: 20:02, 30th January, 2022 (GMT+3), Turkey, Tekirdag, Cherkezkoy.
+
+I found an issue in the porting of Uniswap V2 to Crosschain Dex.
+Uniswap heavily relies on the Router that will calculate Input or Output.
+Then will transfer tokens to the Core contract.
+
+We fixed by copying the 
+
+https://github.com/Uniswap/v2-periphery/blob/master/contracts/libraries/UniswapV2Library.sol#L53
+
+body of function into the Pair.
+
+So, if user wants to get a token from another blockchain, then in the pair the amount in will be calculated 
+by copied function body from UniswapV2Library.
+
+On the Website, we need to create a function that will calculate the Amount IN using the JS.

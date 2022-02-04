@@ -1,0 +1,14 @@
+Date 04:38, 02 February 2022, Istanbul, Turkey.
+
+https://alvarotrigo.com/blog/10-cool-css-animations-to-add-to-your-website/
+
+Ui should be as in ./ui.png. Get that as an inspiration.
+When designing the UI, just think about users who will use it not that often.
+Yet, they are liking cute things.
+
+As you may see in the background an animated circle rotation.
+Let's make the popups as like that. For example the transaction pending.
+Or the block confirmation, shows how the blocks are mined in the network.
+Plus who mined it. Or about some transactions occuring on the blockchains.
+
+When the error is happening, maybe the circle is turning into vertical with showing the error message.
