@@ -1,0 +1,274 @@
+<html>
+  <head>
+    <link rel="shortcut icon" href="https://cdn.seascape.network/currencies/medet.png" />
+    <title>Xdex MVP</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Get some bootstrap default styles -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/main.css" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100" rel="stylesheet">
+  </head>
+  <body>
+    <ul class="nav justify-content-center nav-pills" id="myTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="swap-tab" data-bs-toggle="tab" data-bs-target="#swap" type="button" role="tab" aria-controls="home" aria-selected="false">Swap</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="create-tab" data-bs-toggle="tab" data-bs-target="#create" type="button" role="tab" aria-controls="create" aria-selected="true">Create LP</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="add-tab" data-bs-toggle="tab" data-bs-target="#add" type="button" role="tab" aria-controls="add" aria-selected="false">Add LP</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="remove-tab" data-bs-toggle="tab" data-bs-target="#remove" type="button" role="tab" aria-controls="remove" aria-selected="false">Remove LP</button>
+      </li>
+      <li class="nav-item">
+        <button class="btn btn-primary" id="btn-connect">
+          Connect Wallet
+        </button>
+        <button class="btn btn-warning text-center" id="btn-disconnect" style="display: none;">
+          Disconnect Wallet
+        </button>
+      </li>
+    </ul>
+    <div class="container">
+      <!-- HTTPS required ---->
+      <div class="row mt-4" id="alert-error-https" style="display: none">
+        <div class="col-md-12">
+          <div class="alert alert-danger">
+            To secure wallet connection, please run website on HTTPS connection.
+          </div>
+        </div>
+      </div>
+      <!-- No wallet -->
+      <div class="row mt-4" id="disconnected">
+        <div class="col-md-12"  >
+          <div class="alert alert-warning" role="alert">
+            No wallet connected. Connect wallet to show accounts and their ETH balances!
+          </div>
+        </div>
+      </div>
+      <!-- Wallet connected: show balance -->
+      <div class="row mt-4 mb-4" id="connected" style="display: none;">
+        <div class="col-md-12 list-group-item list-group-item-primary text-center" >
+            Account
+            <strong class="badge bg-primary rounded-pill" id="selected-account">Unknown</strong> 
+            on
+            <span class="badge bg-primary" id="network-name">undefined blockchain</span>
+            with native token balance
+            <span class="badge bg-primary rounded-pill" id="eth-balance">0</span>
+        </div>
+      </div>
+    </div>
+    <div class="tab-content" id="myTabContent">
+      <!-- SWAP -->
+      <div class="tab-pane" id="swap" role="tabpanel" aria-labelledby="swap-tab">
+        <div class="container">
+          <div class="row mt-5">
+            <div class="col-md-12">
+              <button id="fetch-scape-id" class="btn btn-primary">Get the next Scape</button>
+            </div>
+          </div>
+          <div class="row mt-5">
+            <div class="col-md-12">
+              Transfer Scape NFT to
+              <input id="scape-to" />
+              <button id="scape-transfer" class="btn btn-primary">Transfer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- CREATE LP -->
+      <div class="tab-pane show active" id="create" role="tabpanel" aria-labelledby="create-tab">
+        <div class="container">
+          <!-- First token -->
+          <div class="row mt-5">
+            <div class="col-md-3">
+              <label for="exampleFormControlInput1" class="form-label">Blockchain:</label>
+              <input type="text" class="form-control" id="exampleFormControlInput1" value="ETH" disabled="true">
+            </div>
+            <div class="col-md-6">
+              <label for="exampleFormControlInput1" class="form-label">Amount:</label>
+              <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="100.0">
+            </div>
+            <div class="col-md-3">
+              <label for="exampleFormControlInput1" class="form-label">Token:</label>
+              <select class="form-select" aria-label="Select the token">
+                <option selected value="1">Test token 1</option>
+                <option value="2">Test token 2</option>
+                <option value="3">CWS</option>
+              </select>
+            </div>
+          </div>
+          <div class="row mt-3">
+            <div class="col-md-12 text-center">and</div>
+          </div>
+          <!-- Second token -->
+          <div class="row">
+            <div class="col-md-3">
+              <label for="exampleFormControlInput1" class="form-label">Blockchain:</label>
+              <input type="text" class="form-control" id="exampleFormControlInput1" value="BSC" disabled="true">
+            </div>
+            <div class="col-md-6">
+              <label for="exampleFormControlInput1" class="form-label">Amount:</label>
+              <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="100.0">
+            </div>
+            <div class="col-md-3">
+              <label for="exampleFormControlInput1" class="form-label">Token:</label>
+              <select class="form-select" aria-label="Select the token">
+                <option selected value="1">Test token 3</option>
+                <option value="2">Test token 4</option>
+                <option value="3">bCWS</option>
+              </select>
+            </div>
+          </div>
+          <!-- Info about token -->
+          <div class="row mt-5">
+            <div class="col-md-12">
+              <ul class="list-group">
+                <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-info">
+                  Approximate LP:
+                  <span class="badge bg-primary rounded-pill">0</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-info">
+                  Pair address:
+                  <span class="badge bg-primary rounded-pill">0x0</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-info">
+                  Transaction Fee (ÖRE token):
+                  <span class="badge bg-primary rounded-pill">0</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <!-- Actions -->
+          <div class="row mt-5">
+            <div class="col-md-12 text-center">
+              <button class="btn btn-warning text-center" id="btn-disconnect">
+                Approve on Ethereum
+              </button>
+              <button class="btn btn-primary" id="btn-connect">
+                Deposit on Ethereum
+              </button>
+              <button class="btn btn-warning text-center" id="btn-disconnect">
+                Approve on BSC
+              </button>
+              <button class="btn btn-primary" type="button" disabled>
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                Waiting for <span>1</span>/12 blocks
+              </button>
+              <button class="btn btn-primary" type="button" disabled>
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                Waiting for signature...
+              </button>
+              <button class="btn btn-primary" id="btn-connect">
+                Deposit on BSC
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- ADD LP -->
+      <div class="tab-pane" id="add" role="tabpanel" aria-labelledby="add-tab">
+        <div class="container">
+          <!-- Transfer Scapes -->
+          <div class="row mt-5">
+            <div class="col-md-12">
+              <button id="fetch-scape-id" class="btn btn-primary">Get the next Scape</button>
+            </div>
+          </div>
+          <div class="row mt-5">
+            <div class="col-md-12">
+              Transfer Scape NFT to
+              <input id="scape-to" />
+              <button id="scape-transfer" class="btn btn-primary">Transfer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tab-pane" id="remove" role="tabpanel" aria-labelledby="remove-tab">
+        <div class="container">
+          <!-- Transfer Scapes -->
+          <div class="row mt-5">
+            <div class="col-md-12">
+              <button id="fetch-scape-id" class="btn btn-primary">Get the next Scape</button>
+            </div>
+          </div>
+          <div class="row mt-5">
+            <div class="col-md-12">
+              Transfer Scape NFT to
+              <input id="scape-to" />
+              <button id="scape-transfer" class="btn btn-primary">Transfer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+
+    <!-- Modal about generic errors -->
+    <div class="modal fade " id="error-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+      <div class="modal-dialog  modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content alert alert-warning" role="alert">
+          <div class="modal-header">
+            <h5 class="modal-title" id="staticBackdropLabel">Error:</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">  
+            <div class="container-fluid">
+              <div class="row">
+                <div class="col-md-12">
+                  <p id="error-message"></p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transaction status -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+      <div id="toast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+          <strong class="me-auto" id="toast-title"></strong>
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+          ...
+        </div>
+      </div>
+    </div>
+
+    <!--
+      Use unpkg CDN to load all NPM packages to vanilla Javascript - read more at http://unpkg.com
+
+      On your deployment, you properly either want to use a preprocessing tool like webpack
+      to include these files, or extract NPM archives and manually host the files inside.
+
+      TODO: Pin down all versions.
+
+    -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+
+    <script type="text/javascript" src="https://unpkg.com/web3@1.2.11/dist/web3.min.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/web3modal@1.9.0/dist/index.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/evm-chains@0.2.0/dist/umd/index.min.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/@walletconnect/web3-provider@1.3.6/dist/umd/index.min.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/fortmatic@2.0.6/dist/fortmatic.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/web3@1.3.0/dist/web3.min.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/@metamask/detect-provider/dist/detect-provider.min.js"></script>
+
+    <!-- This is our code -->
+    <script type="text/javascript" src="abi-js/Scape.js"></script>
+    <script type="text/javascript" src="js/main.js"></script>
+    <script type="text/javascript" src="js/investor.js"></script>
+    <script type="module" src="wallet-connect.js"></script>
+
+  </body>
+</html>

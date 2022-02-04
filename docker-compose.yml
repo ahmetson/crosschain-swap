@@ -23,6 +23,26 @@ services:
       - ./smartcontracts/.env
   #################################################
   #
+  # UI
+  #
+  #################################################
+  ui:
+    build:
+      context: ./docs
+    container_name: "docs"
+    volumes:
+      - type: bind
+        source: ./docs
+        target: /home/node/app
+      - /home/node/app/node_modules
+    networks:
+      - net
+    entrypoint: sh
+    command: '-c "sleep 1d"'
+    ports:
+      - "443:443"
+  #################################################
+  #
   # Bridge that is between different blockchains
   #
   #################################################

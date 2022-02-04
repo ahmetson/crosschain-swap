@@ -1,8 +1,0 @@
-Date: 11:25, 23th January, 2022 (GMT+4), Georgia, Gudauri, RedCo Loft 1.
-
-Recently found what I was looking for. Chainlink is making a cross-chain interoperability protocol.
-And tools that allows blockchain interaction through oracles.
-
-In this case, we don't have to create our own blockchain.
-
-Now, we need to structurize the smartcontracts in a way, so that they will interact via oracles.

@@ -1,0 +1,33 @@
+{
+  "name": "xdex-ui",
+  "version": "1.0.0",
+  "description": "MVP website",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ahmetson/xdex.git"
+  },
+  "keywords": [
+    "dex",
+    "xdex"
+  ],
+  "author": "Medet Ahmetson <admin@blocklords.io>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ahmetson/xdex/issues"
+  },
+  "homepage": "https://github.com/ahmetson/xdex#readme",
+  "devDependencies": {
+    "@ethersproject/address": "^5.0.8",
+    "@ethersproject/contracts": "^5.0.8",
+    "@ethersproject/networks": "^5.0.6",
+    "@ethersproject/providers": "^5.0.17",
+    "@ethersproject/solidity": "^5.0.7",
+    "express": "^4.17.1",
+    "https-localhost": "^4.6.3"
+  }
+}
