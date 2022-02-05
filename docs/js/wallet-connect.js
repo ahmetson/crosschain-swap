@@ -1,8 +1,8 @@
 "use strict";
 
-/**
- * Wallet connection interface
- */
+//
+// Wallet connection interface
+//
 
  // Unpkg imports
 const Web3Modal = window.Web3Modal.default;
@@ -19,7 +19,6 @@ let provider;
 
 // Address of the selected account
 let selectedAccount;
-
 
 let accountContainer;
 
@@ -38,7 +37,6 @@ function init() {
     // https://ethereum.stackexchange.com/a/62217/620
     const alert = document.querySelector("#alert-error-https");
     alert.style.display = "block";
-    document.querySelector("#btn-connect").setAttribute("disabled", "disabled")
     return;
   }
 
@@ -95,9 +93,7 @@ async function fetchAccountData() {
 
   // Display fully loaded UI for wallet data
   document.querySelector("#connected").style.display = "flex";
-  document.querySelector("#disconnected").style.display = "none";
 
-  document.querySelector("#btn-connect").style.display = "none";
   document.querySelector("#btn-disconnect").style.display = "block";
 
   // Showing pool also loads the tokens
@@ -170,10 +166,7 @@ async function refreshAccountData() {
   // fetchAccountData() will take a while as it communicates
   // with Ethereum node via JSON-RPC and loads chain data
   // over an API call.
-  document.querySelector("#btn-connect").setAttribute("disabled", "disabled")
-
   await fetchAccountData(provider);
-  document.querySelector("#btn-connect").removeAttribute("disabled")
 }
 
 
@@ -302,11 +295,11 @@ async function onDisconnect() {
   selectedAccount = null;
 
   // Set the UI back to the initial state
-  document.querySelector("#disconnected").style.display = "flex";
   document.querySelector("#connected").style.display = "none";
 
-  document.querySelector("#btn-connect").style.display = "block";
   document.querySelector("#btn-disconnect").style.display = "none";
+
+  onConnect();
 }
 
 /**
@@ -314,6 +307,6 @@ async function onDisconnect() {
  */
 window.addEventListener('load', async () => {
   init();
-  document.querySelector("#btn-connect").addEventListener("click", onConnect);
+  await onConnect();
   document.querySelector("#btn-disconnect").addEventListener("click", onDisconnect);
 });

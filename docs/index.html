@@ -13,24 +13,18 @@
   <body>
     <ul class="nav justify-content-center nav-pills" id="myTab" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="swap-tab" data-bs-toggle="tab" data-bs-target="#swap" type="button" role="tab" aria-controls="home" aria-selected="false">Swap</button>
+        <h1>Xdex</h1>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="create-tab" data-bs-toggle="tab" data-bs-target="#create" type="button" role="tab" aria-controls="create" aria-selected="true">Create LP</button>
+        <button class="nav-link" id="user-tab" data-bs-toggle="tab" data-bs-target="#user" type="button" role="tab" aria-controls="user" aria-selected="false">User</button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="add-tab" data-bs-toggle="tab" data-bs-target="#add" type="button" role="tab" aria-controls="add" aria-selected="false">Add LP</button>
+        <button class="nav-link active" id="provider-tab" data-bs-toggle="tab" data-bs-target="#provider" type="button" role="tab" aria-controls="provider" aria-selected="true">LP Provider</button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="remove-tab" data-bs-toggle="tab" data-bs-target="#remove" type="button" role="tab" aria-controls="remove" aria-selected="false">Remove LP</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <a target="_blank" rel="noopener noreferrer" href="http://github.com/ahmetson/xdex">Source Code</a>
+        <button class="nav-link" id="dev-tab" data-bs-toggle="tab" data-bs-target="#dev" type="button" role="tab" aria-controls="dev" aria-selected="false">Developer</button>
       </li>
       <li class="nav-item">
-        <button class="btn btn-primary" id="btn-connect">
-          Connect Wallet
-        </button>
         <button class="btn btn-warning text-center" id="btn-disconnect" style="display: none;">
           Disconnect Wallet
         </button>
@@ -42,14 +36,6 @@
         <div class="col-md-12">
           <div class="alert alert-danger">
             To secure wallet connection, please run website on HTTPS connection.
-          </div>
-        </div>
-      </div>
-      <!-- No wallet -->
-      <div class="row mt-4" id="disconnected">
-        <div class="col-md-12"  >
-          <div class="alert alert-warning" role="alert">
-            No wallet connected. Connect wallet to show accounts and their ETH balances!
           </div>
         </div>
       </div>
@@ -66,144 +52,407 @@
       </div>
     </div>
     <div class="tab-content" id="myTabContent">
-      <!-- SWAP -->
-      <div class="tab-pane" id="swap" role="tabpanel" aria-labelledby="swap-tab">
+      <!-- User -->
+      <div class="tab-pane" id="user" role="tabpanel" aria-labelledby="user-tab">
         <div class="container">
+          <!-- User: nav menu -->
           <div class="row mt-5">
             <div class="col-md-12">
-              <button id="fetch-scape-id" class="btn btn-primary">Get the next Scape</button>
-            </div>
-          </div>
-          <div class="row mt-5">
-            <div class="col-md-12">
-              Transfer Scape NFT to
-              <input id="scape-to" />
-              <button id="scape-transfer" class="btn btn-primary">Transfer</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- CREATE LP -->
-      <div class="tab-pane show active" id="create" role="tabpanel" aria-labelledby="create-tab">
-        <div class="container">
-          <!-- First token -->
-          <div class="row mt-5">
-            <div class="col-md-3">
-              <label for="exampleFormControlInput1" class="form-label">Blockchain:</label>
-              <input type="text" class="form-control" id="exampleFormControlInput1" value="ETH" disabled="true">
-            </div>
-            <div class="col-md-6">
-              <label for="exampleFormControlInput1" class="form-label">Amount:</label>
-              <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="100.0">
-            </div>
-            <div class="col-md-3">
-              <label for="exampleFormControlInput1" class="form-label">Token:</label>
-              <select class="form-select" aria-label="Select the token">
-                <option selected value="1">Test token 1</option>
-                <option value="2">Test token 2</option>
-                <option value="3">CWS</option>
-              </select>
-            </div>
-          </div>
-          <div class="row mt-3">
-            <div class="col-md-12 text-center">and</div>
-          </div>
-          <!-- Second token -->
-          <div class="row">
-            <div class="col-md-3">
-              <label for="exampleFormControlInput1" class="form-label">Blockchain:</label>
-              <input type="text" class="form-control" id="exampleFormControlInput1" value="BSC" disabled="true">
-            </div>
-            <div class="col-md-6">
-              <label for="exampleFormControlInput1" class="form-label">Amount:</label>
-              <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="100.0">
-            </div>
-            <div class="col-md-3">
-              <label for="exampleFormControlInput1" class="form-label">Token:</label>
-              <select class="form-select" aria-label="Select the token">
-                <option selected value="1">Test token 3</option>
-                <option value="2">Test token 4</option>
-                <option value="3">bCWS</option>
-              </select>
-            </div>
-          </div>
-          <!-- Info about token -->
-          <div class="row mt-5">
-            <div class="col-md-12">
-              <ul class="list-group">
-                <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-info">
-                  Approximate LP:
-                  <span class="badge bg-primary rounded-pill">0</span>
-                </li>
-                <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-info">
-                  Pair address:
-                  <span class="badge bg-primary rounded-pill">0x0</span>
-                </li>
-                <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-info">
-                  Transaction Fee (ÖRE token):
-                  <span class="badge bg-primary rounded-pill">0</span>
+              <ul class="nav nav-pills" id="user-tab" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link active" id="user-swap-tab" data-bs-toggle="tab" data-bs-target="#user-swap" type="button" role="tab" aria-controls="user-swap" aria-selected="true">Swap</button>
                 </li>
               </ul>
             </div>
           </div>
-          <!-- Actions -->
-          <div class="row mt-5">
-            <div class="col-md-12 text-center">
-              <button class="btn btn-warning text-center" id="btn-disconnect">
-                Approve on Ethereum
-              </button>
-              <button class="btn btn-primary" id="btn-connect">
-                Deposit on Ethereum
-              </button>
-              <button class="btn btn-warning text-center" id="btn-disconnect">
-                Approve on BSC
-              </button>
-              <button class="btn btn-primary" type="button" disabled>
-                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                Waiting for <span>1</span>/12 blocks
-              </button>
-              <button class="btn btn-primary" type="button" disabled>
-                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                Waiting for signature...
-              </button>
-              <button class="btn btn-primary" id="btn-connect">
-                Deposit on BSC
-              </button>
+          <!---------------------------------->
+          <!-- User tabs -->
+          <!---------------------------------->
+          <div class="tab-content" id="user-tab-content">
+            <!-- User tabs: swap -->
+            <div class="tab-pane show active" id="user-swap" role="tabpanel" aria-labelledby="user-swap-tab">
+              <div class="container">
+                <!-- First token -->
+                <div class="row mt-5">
+                  <div class="col-md-3">
+                    <label for="exampleFormControlInput1" class="form-label">Blockchain:</label>
+                    <select class="form-select" aria-label="Select the blockchain">
+                      <option selected value="from-ethereum">Ethereum</option>
+                      <option value="from-bsc">Bsc</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="exampleFormControlInput1" class="form-label">Amount:</label>
+                    <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="100.0">
+                  </div>
+                  <div class="col-md-3">
+                    <label for="exampleFormControlInput1" class="form-label">Token:</label>
+                    <select class="form-select" aria-label="Select the token">
+                      <option selected value="1">Test token 1</option>
+                      <option value="2">Test token 2</option>
+                      <option value="3">CWS</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="row mt-3">
+                  <div class="col-md-12 list-group-item list-group-item-light d-flex justify-content-between align-items-center" >
+                    Balance
+                    <span class="badge bg-primary rounded-pill" id="from-balance">0</span>
+                  </div>
+                  <div class="col-md-12 text-center">to</div>
+                </div>
+                <!-- Second token -->
+                <div class="row">
+                  <div class="col-md-3">
+                    <label for="exampleFormControlInput1" class="form-label">Blockchain:</label>
+                    <select class="form-select" aria-label="Select the blockchain">
+                      <option value="to-ethereum">Ethereum</option>
+                      <option selected value="to-bsc">Bsc</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="exampleFormControlInput1" class="form-label">Amount:</label>
+                    <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="100.0" disabled>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="exampleFormControlInput1" class="form-label">Token:</label>
+                    <select class="form-select" aria-label="Select the token">
+                      <option selected value="1">Test token 3</option>
+                      <option value="2">Test token 4</option>
+                      <option value="3">bCWS</option>
+                    </select>
+                  </div>
+                </div>
+                <!-- Actions -->
+                <div class="row mt-5">
+                  <div class="col-md-12 text-center">
+                    <button class="btn btn-warning text-center" id="btn-disconnect">
+                      Approve on Ethereum
+                    </button>
+                    <button class="btn btn-warning text-center" id="btn-disconnect">
+                      Approve on BSC
+                    </button>
+                    <button class="btn btn-primary" id="btn-connect">
+                      Deposit on BSC
+                    </button>
+                    <button class="btn btn-primary" id="btn-connect">
+                      Withdraw on BSC
+                    </button>
+                    <button class="btn btn-primary" type="button" disabled>
+                      <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      Waiting for <span>1</span>/12 blocks
+                    </button>
+                    <button class="btn btn-primary" type="button" disabled>
+                      <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      Waiting for signature...
+                    </button>
+                    <button class="btn btn-primary" id="btn-connect">
+                      Swap
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      <!-- ADD LP -->
-      <div class="tab-pane" id="add" role="tabpanel" aria-labelledby="add-tab">
+      <!-- Provider -->
+      <div class="tab-pane show active" id="provider" role="tabpanel" aria-labelledby="provider-tab">
         <div class="container">
-          <!-- Transfer Scapes -->
+          <!-- Provider: nav menu -->
           <div class="row mt-5">
             <div class="col-md-12">
-              <button id="fetch-scape-id" class="btn btn-primary">Get the next Scape</button>
+              <ul class="nav nav-pills" id="user-tab" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link active" id="provider-create-tab" data-bs-toggle="tab" data-bs-target="#provider-create" type="button" role="tab" aria-controls="provider-create" aria-selected="true">Create LP</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="provider-add-tab" data-bs-toggle="tab" data-bs-target="#provider-add" type="button" role="tab" aria-controls="provider-add" aria-selected="false">Add LP</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="provider-remove-tab" data-bs-toggle="tab" data-bs-target="#provider-remove" type="button" role="tab" aria-controls="provider-remove" aria-selected="false">Remove LP</button>
+                </li>
+              </ul>
             </div>
           </div>
-          <div class="row mt-5">
-            <div class="col-md-12">
-              Transfer Scape NFT to
-              <input id="scape-to" />
-              <button id="scape-transfer" class="btn btn-primary">Transfer</button>
+          <!---------------------------------->
+          <!-- Provider tabs -->
+          <!---------------------------------->
+          <div class="tab-content" id="provider-tab-content">
+            <!-- Provider tabs: create -->
+            <div class="tab-pane show active" id="provider-create" role="tabpanel" aria-labelledby="provider-create-tab">
+              <div class="container">
+                <!-- First token -->
+                <div class="row mt-5">
+                  <div class="col-md-3">
+                    <label for="exampleFormControlInput1" class="form-label">Blockchain:</label>
+                    <input type="text" class="form-control" id="exampleFormControlInput1" value="ETH" disabled="true">
+                  </div>
+                  <div class="col-md-6">
+                    <label for="exampleFormControlInput1" class="form-label">Amount:</label>
+                    <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="100.0">
+                  </div>
+                  <div class="col-md-3">
+                    <label for="exampleFormControlInput1" class="form-label">Token:</label>
+                    <select class="form-select" aria-label="Select the token">
+                      <option selected value="1">Test token 1</option>
+                      <option value="2">Test token 2</option>
+                      <option value="3">CWS</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="row mt-3">
+                  <div class="col-md-12 text-center">and</div>
+                </div>
+                <!-- Second token -->
+                <div class="row">
+                  <div class="col-md-3">
+                    <label for="exampleFormControlInput1" class="form-label">Blockchain:</label>
+                    <input type="text" class="form-control" id="exampleFormControlInput1" value="BSC" disabled="true">
+                  </div>
+                  <div class="col-md-6">
+                    <label for="exampleFormControlInput1" class="form-label">Amount:</label>
+                    <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="100.0">
+                  </div>
+                  <div class="col-md-3">
+                    <label for="exampleFormControlInput1" class="form-label">Token:</label>
+                    <select class="form-select" aria-label="Select the token">
+                      <option selected value="1">Test token 3</option>
+                      <option value="2">Test token 4</option>
+                      <option value="3">bCWS</option>
+                    </select>
+                  </div>
+                </div>
+                <!-- Info about token -->
+                <div class="row mt-5">
+                  <div class="col-md-12">
+                    <ul class="list-group">
+                      <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-info">
+                        Approximate LP:
+                        <span class="badge bg-primary rounded-pill">0</span>
+                      </li>
+                      <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-info">
+                        Pair address:
+                        <span class="badge bg-primary rounded-pill">0x0</span>
+                      </li>
+                      <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-info">
+                        Transaction Fee (ÖRE token):
+                        <span class="badge bg-primary rounded-pill">0</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                <!-- Actions -->
+                <div class="row mt-5">
+                  <div class="col-md-12 text-center">
+                    <button class="btn btn-warning text-center" id="btn-disconnect">
+                      Approve on Ethereum
+                    </button>
+                    <button class="btn btn-primary" id="btn-connect">
+                      Deposit on BSC
+                    </button>
+                    <button class="btn btn-warning text-center" id="btn-disconnect">
+                      Approve on BSC
+                    </button>
+                    <button class="btn btn-primary" type="button" disabled>
+                      <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      Waiting for <span>1</span>/12 blocks
+                    </button>
+                    <button class="btn btn-primary" type="button" disabled>
+                      <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      Waiting for signature...
+                    </button>
+                    <button class="btn btn-primary" id="btn-connect">
+                      Create
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Provider tabs: add -->
+            <div class="tab-pane" id="provider-add" role="tabpanel" aria-labelledby="provider-add-tab">
+              <div class="container">
+                <!-- First token -->
+                <div class="row mt-5">
+                  <div class="col-md-3">
+                    <label for="exampleFormControlInput1" class="form-label">Blockchain:</label>
+                    <input type="text" class="form-control" id="exampleFormControlInput1" value="ETH" disabled="true">
+                  </div>
+                  <div class="col-md-6">
+                    <label for="exampleFormControlInput1" class="form-label">Amount:</label>
+                    <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="100.0">
+                  </div>
+                  <div class="col-md-3">
+                    <label for="exampleFormControlInput1" class="form-label">Token:</label>
+                    <select class="form-select" aria-label="Select the token">
+                      <option selected value="1">Test token 1</option>
+                      <option value="2">Test token 2</option>
+                      <option value="3">CWS</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="row mt-3">
+                  <div class="col-md-12 text-center">and</div>
+                </div>
+                <!-- Second token -->
+                <div class="row">
+                  <div class="col-md-3">
+                    <label for="exampleFormControlInput1" class="form-label">Blockchain:</label>
+                    <input type="text" class="form-control" id="exampleFormControlInput1" value="BSC" disabled="true">
+                  </div>
+                  <div class="col-md-6">
+                    <label for="exampleFormControlInput1" class="form-label">Amount:</label>
+                    <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="100.0">
+                  </div>
+                  <div class="col-md-3">
+                    <label for="exampleFormControlInput1" class="form-label">Token:</label>
+                    <select class="form-select" aria-label="Select the token">
+                      <option selected value="1">Test token 3</option>
+                      <option value="2">Test token 4</option>
+                      <option value="3">bCWS</option>
+                    </select>
+                  </div>
+                </div>
+                <!-- Info about token -->
+                <div class="row mt-5">
+                  <div class="col-md-12">
+                    <ul class="list-group">
+                      <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-info">
+                        Approximate LP:
+                        <span class="badge bg-primary rounded-pill">0</span>
+                      </li>
+                      <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-info">
+                        Pair address:
+                        <span class="badge bg-primary rounded-pill">0x0</span>
+                      </li>
+                      <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-info">
+                        Transaction Fee (ÖRE token):
+                        <span class="badge bg-primary rounded-pill">0</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                <!-- Actions -->
+                <div class="row mt-5">
+                  <div class="col-md-12 text-center">
+                    <button class="btn btn-warning text-center" id="btn-disconnect">
+                      Approve on Ethereum
+                    </button>
+                    <button class="btn btn-primary" id="btn-connect">
+                      Deposit on BSC
+                    </button>
+                    <button class="btn btn-warning text-center" id="btn-disconnect">
+                      Approve on BSC
+                    </button>
+                    <button class="btn btn-primary" type="button" disabled>
+                      <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      Waiting for <span>1</span>/12 blocks
+                    </button>
+                    <button class="btn btn-primary" type="button" disabled>
+                      <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      Waiting for signature...
+                    </button>
+                    <button class="btn btn-primary" id="btn-connect">
+                      Add
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Provider tabs: remove -->
+            <div class="tab-pane" id="provider-remove" role="tabpanel" aria-labelledby="provider-remove-tab">
+              <div class="container">
+                <div class="row mt-5">
+                  <div class="col-md-12">
+                    <label for="exampleFormControlInput1" class="form-label">Pair:</label>
+                  </div>
+                </div>
+                <!-- Pair address -->
+                <div class="row">
+                  <div class="col-md-2">
+                    <select class="form-select" aria-label="Select the blockchain">
+                      <option value="to-ethereum">Ethereum</option>
+                      <option selected value="to-bsc">Bsc</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <select class="form-select" aria-label="Select the token">
+                      <option selected value="1">Test token 1</option>
+                      <option value="2">Test token 2</option>
+                      <option value="3">CWS</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2 text-center">
+                    &ndash;
+                  </div>
+                  <div class="col-md-2">
+                    <select class="form-select" aria-label="Select the blockchain">
+                      <option value="to-ethereum">Ethereum</option>
+                      <option selected value="to-bsc">Bsc</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <select class="form-select" aria-label="Select the token">
+                      <option selected value="1">Test token 1</option>
+                      <option value="2">Test token 2</option>
+                      <option value="3">CWS</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="row mt-3">
+                  <div class="col-md-12 list-group-item list-group-item-light text-center" >
+                    Pair <strong id="lp-address">0x...</strong> balance
+                    <span class="badge bg-primary rounded-pill" id="lp-balance">0</span>
+                  </div>
+                </div>
+                <!-- Info about token -->
+                <div class="row mt-5">
+                  <div class="col-md-12">
+                    <ul class="list-group">
+                      <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-info">
+                        Approximate <strong id="source-token">ETH-CWS</strong>:
+                        <span class="badge bg-primary rounded-pill">0</span>
+                      </li>
+                      <li class="list-group-item d-flex justify-content-between align-items-center list-group-item-info">
+                        Approximate <strong id="target-token">BSC-TEST</strong>:
+                        <span class="badge bg-primary rounded-pill">0</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                <!-- Actions -->
+                <div class="row mt-5">
+                  <div class="col-md-12 text-center">
+                    <button class="btn btn-warning text-center" id="btn-disconnect">
+                      Remove on Ethereum
+                    </button>
+                    <button class="btn btn-primary" id="btn-connect">
+                      Withdraw on BSC
+                    </button>
+                    <button class="btn btn-primary" type="button" disabled>
+                      <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      Waiting for <span>1</span>/12 blocks
+                    </button>
+                    <button class="btn btn-primary" type="button" disabled>
+                      <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      Waiting for signature...
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      <div class="tab-pane" id="remove" role="tabpanel" aria-labelledby="remove-tab">
+      <!-- Dev -->
+      <div class="tab-pane" id="dev" role="tabpanel" aria-labelledby="dev-tab">
         <div class="container">
-          <!-- Transfer Scapes -->
           <div class="row mt-5">
             <div class="col-md-12">
-              <button id="fetch-scape-id" class="btn btn-primary">Get the next Scape</button>
-            </div>
-          </div>
-          <div class="row mt-5">
-            <div class="col-md-12">
-              Transfer Scape NFT to
-              <input id="scape-to" />
-              <button id="scape-transfer" class="btn btn-primary">Transfer</button>
+              <p>
+                Open source is available on: 
+                <a class="active" target="_blank" rel="noopener noreferrer" href="http://github.com/ahmetson/xdex">github.com/ahmetson/xdex</a>
+              </p>
             </div>
           </div>
         </div>
@@ -271,7 +520,7 @@
     <script type="text/javascript" src="abi-js/Scape.js"></script>
     <script type="text/javascript" src="js/main.js"></script>
     <script type="text/javascript" src="js/investor.js"></script>
-    <script type="module" src="wallet-connect.js"></script>
+    <script type="module" src="js/wallet-connect.js"></script>
 
   </body>
 </html>
