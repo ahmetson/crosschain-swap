@@ -51,9 +51,14 @@
         </div>
       </div>
     </div>
+    <!----------------------------------------------------------------------- 
+      |                                                                     |
+      |                          CONTENT                                    |
+      |                                                                     |
+     ------------------------------------------------------------------------>
     <div class="tab-content" id="myTabContent">
       <!-- User -->
-      <div class="tab-pane" id="user" role="tabpanel" aria-labelledby="user-tab">
+      <div class="tab-pane fade" id="user" role="tabpanel" aria-labelledby="user-tab">
         <div class="container">
           <!-- User: nav menu -->
           <div class="row mt-5">
@@ -157,7 +162,7 @@
         </div>
       </div>
       <!-- Provider -->
-      <div class="tab-pane show active" id="provider" role="tabpanel" aria-labelledby="provider-tab">
+      <div class="tab-pane fade show active" id="provider" role="tabpanel" aria-labelledby="provider-tab">
         <div class="container">
           <!-- Provider: nav menu -->
           <div class="row mt-5">
@@ -185,16 +190,16 @@
                 <!-- First token -->
                 <div class="row mt-5">
                   <div class="col-md-3">
-                    <label for="exampleFormControlInput1" class="form-label">Blockchain:</label>
-                    <input type="text" class="form-control" id="exampleFormControlInput1" value="ETH" disabled="true">
+                    <label for="provider-create-source-name" class="form-label">Blockchain:</label>
+                    <input type="text" class="form-control" id="provider-create-source-name" value="ETH" disabled="true">
                   </div>
                   <div class="col-md-6">
-                    <label for="exampleFormControlInput1" class="form-label">Amount:</label>
-                    <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="100.0">
+                    <label for="provider-create-source-amount" class="form-label">Amount:</label>
+                    <input type="number" class="form-control" id="provider-create-source-amount" placeholder="100.0">
                   </div>
                   <div class="col-md-3">
-                    <label for="exampleFormControlInput1" class="form-label">Token:</label>
-                    <select class="form-select" aria-label="Select the token">
+                    <label for="provider-create-source-list" class="form-label">Token:</label>
+                    <select class="form-select" aria-label="Select the token" id="provider-create-source-list">
                       <option selected value="1">Test token 1</option>
                       <option value="2">Test token 2</option>
                       <option value="3">CWS</option>
@@ -207,16 +212,16 @@
                 <!-- Second token -->
                 <div class="row">
                   <div class="col-md-3">
-                    <label for="exampleFormControlInput1" class="form-label">Blockchain:</label>
-                    <input type="text" class="form-control" id="exampleFormControlInput1" value="BSC" disabled="true">
+                    <label for="provider-create-target-name" class="form-label">Blockchain:</label>
+                    <input type="text" class="form-control" id="provider-create-target-name" value="BSC" disabled="true">
                   </div>
                   <div class="col-md-6">
-                    <label for="exampleFormControlInput1" class="form-label">Amount:</label>
-                    <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="100.0">
+                    <label for="provider-create-target-amount" class="form-label">Amount:</label>
+                    <input type="number" class="form-control" id="provider-create-target-amount" placeholder="100.0">
                   </div>
                   <div class="col-md-3">
-                    <label for="exampleFormControlInput1" class="form-label">Token:</label>
-                    <select class="form-select" aria-label="Select the token">
+                    <label for="provider-create-target-list" class="form-label">Token:</label>
+                    <select class="form-select" aria-label="Select the token" id="provider-create-target-list">
                       <option selected value="1">Test token 3</option>
                       <option value="2">Test token 4</option>
                       <option value="3">bCWS</option>
@@ -245,24 +250,24 @@
                 <!-- Actions -->
                 <div class="row mt-5">
                   <div class="col-md-12 text-center">
-                    <button class="btn btn-warning text-center" id="btn-disconnect">
+                    <button class="btn btn-warning text-center" id="btn-create-approve-source">
                       Approve on Ethereum
                     </button>
-                    <button class="btn btn-primary" id="btn-connect">
+                    <button class="btn btn-primary" id="btn-create-deposit-target">
                       Deposit on BSC
                     </button>
-                    <button class="btn btn-warning text-center" id="btn-disconnect">
+                    <button class="btn btn-warning text-center" id="btn-create-approve-target">
                       Approve on BSC
                     </button>
-                    <button class="btn btn-primary" type="button" disabled>
+                    <button class="btn btn-primary" type="button" disabled id="btn-create-waiting">
                       <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                      Waiting for <span>1</span>/12 blocks
+                      Waiting for <span id="provider-create-left-blocks">1</span>/12 blocks
                     </button>
-                    <button class="btn btn-primary" type="button" disabled>
+                    <button class="btn btn-primary" type="button" disabled id="btn-create-sig">
                       <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                       Waiting for signature...
                     </button>
-                    <button class="btn btn-primary" id="btn-connect">
+                    <button class="btn btn-primary" id="btn-create">
                       Create
                     </button>
                   </div>
@@ -445,7 +450,7 @@
         </div>
       </div>
       <!-- Dev -->
-      <div class="tab-pane" id="dev" role="tabpanel" aria-labelledby="dev-tab">
+      <div class="tab-pane fade" id="dev" role="tabpanel" aria-labelledby="dev-tab">
         <div class="container">
           <div class="row mt-5">
             <div class="col-md-12">
@@ -510,16 +515,18 @@
 
     <script type="text/javascript" src="https://unpkg.com/web3@1.2.11/dist/web3.min.js"></script>
     <script type="text/javascript" src="https://unpkg.com/web3modal@1.9.0/dist/index.js"></script>
-    <script type="text/javascript" src="https://unpkg.com/evm-chains@0.2.0/dist/umd/index.min.js"></script>
     <script type="text/javascript" src="https://unpkg.com/@walletconnect/web3-provider@1.3.6/dist/umd/index.min.js"></script>
     <script type="text/javascript" src="https://unpkg.com/fortmatic@2.0.6/dist/fortmatic.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/web3@1.3.0/dist/web3.min.js"></script>
     <script type="text/javascript" src="https://unpkg.com/@metamask/detect-provider/dist/detect-provider.min.js"></script>
 
     <!-- This is our code -->
-    <script type="text/javascript" src="abi-js/Scape.js"></script>
+    <script type="text/javascript" src="abi-js/erc20.js"></script>
+    <script type="text/javascript" src="abi-js/factory.js"></script>
+    <script type="text/javascript" src="abi-js/targetChain.js"></script>
     <script type="text/javascript" src="js/main.js"></script>
-    <script type="text/javascript" src="js/investor.js"></script>
+    <script type="text/javascript" src="js/provider-create.js"></script>
+    <script type="text/javascript" src="js/ui.js"></script>
     <script type="module" src="js/wallet-connect.js"></script>
 
   </body>

@@ -30,16 +30,34 @@ window.claimable = function(pool, grant) {
 };
 
 window.init = async function() {
-    try {
-        window.scape      = await getContract("scape");
-    } catch (e) {
-        printErrorMessage(e);
-        return;
-    }
+    loadContracts();
 
+    showProviderCreateLp();
     // document.querySelector("#pool-info-name").textContent = selectedPool;
     // document.querySelector("#pool-info-contract").textContent = window.vesting._address;
 }
+
+window.enableBtn = function(btn, callback) {
+    btn.style.display = "";
+    btn.addEventListener("click", callback);
+}
+
+window.disableBtn = function(btn, callback) {
+    btn.removeEventListener("click", callback);
+    btn.style.display = "none";
+}
+
+// for JS documentation refer to link:
+// https://getbootstrap.com/docs/5.1/components/navs-tabs/
+//
+// event.target // newly activated tab
+// event.relatedTarget // previous active tab
+window.onMainTabSwitch = async function(event) {
+    console.log(event.target);
+    let tabId = event.target.getAttribute("aria-controls");
+    let tab = document.querySelector("#" + tabId);
+    console.log(tab);
+};
 
 function secondsToDhms(seconds) {
     if (seconds < 0) {
@@ -62,11 +80,20 @@ function secondsToDhms(seconds) {
  * Main entry point.
  */
 window.addEventListener('load', async () => {
-    document.querySelector("#scape-transfer").addEventListener("click", onTransfer);
-    document.querySelector("#fetch-scape-id").addEventListener("click", onFetch);
+    // document.querySelector("#scape-transfer").addEventListener("click", onTransfer);
+    // document.querySelector("#fetch-scape-id").addEventListener("click", onFetch);
 
     let toastEl = document.querySelector("#toast");
     window.toast = new bootstrap.Toast(toastEl);
+
+    var tabElems = document.querySelectorAll('#myTab button[data-bs-toggle="tab"]')
+    for (var tabEl of tabElems) {
+      tabEl.addEventListener('shown.bs.tab', function (event) {
+        if (window.onMainTabSwitch) {
+          window.onMainTabSwitch(event);
+        }
+      })
+    }
 });
  
 /**
@@ -98,6 +125,15 @@ async function onFetch() {
     } catch (error) {
         printErrorMessage(`Account ${window.selectedAccount} doesn't have any Scape NFT`);
     }
+}
+
+function showToast(title, body) {
+    toast.hide();
+
+    document.querySelector("#toast-title").textContent = title;
+    document.querySelector(".toast-body").innerHTML = body;
+
+    toast.show();
 }
 
 async function onTransfer() {

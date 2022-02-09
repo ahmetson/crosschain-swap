@@ -27,9 +27,11 @@ let accountContainer;
  */
 function init() {
   // Popup to show if CSV is invalid
-  window.errorModal = new bootstrap.Modal(document.getElementById('error-modal'), {
-    keyboard: false
-  })
+  window.errorModalEl = document.getElementById('error-modal');
+  window.errorModal = new bootstrap.Modal(window.errorModalEl, {
+    keyboard: false,
+    backdrop: 'static'
+  });
 
   // Check that the web page is run in a secure context,
   // as otherwise MetaMask won't be available
@@ -79,8 +81,13 @@ async function fetchAccountData() {
 
   // Get connected chain id from Ethereum node
   const chainId = await web3.eth.getChainId();
+  window.chainId = chainId;
   // Load chain information over an HTTP API
-  const chainData = evmChains.getChain(chainId);
+  let chainData = blockchainConfig[chainId];
+
+  if (!chainData) {
+    return printErrorMessage(`Unsupported network. Please connect to valid blockchain network`);
+  }
   document.querySelector("#network-name").textContent = chainData.name;
 
   // Get list of accounts of the connected wallet
@@ -120,6 +127,7 @@ function updateBalance() {
 window.printErrorMessage = function(message) {
   document.querySelector("#error-message").textContent = message;
   window.errorModal.show();
+
 }
 
 window.showNativeToken = async function() {
@@ -131,20 +139,20 @@ window.showNativeToken = async function() {
 }
 
 window.showToken = async function() {
-  if (!window.xdex) {
-    try {
-      window.xdex = await getContract("factory");
-    } catch (e) {
-      printErrorMessage(e);
-      return;
-    }
-  }
+  // if (!window.xdex) {
+  //   try {
+  //     window.xdex = await getContract("factory");
+  //   } catch (e) {
+  //     printErrorMessage(e);
+  //     return;
+  //   }
+  // }
 
-  const balance = await window.xdex.methods.balanceOf(window.selectedAccount).call({from: window.selectedAccount});
-  const ethBalance = web3.utils.fromWei(balance, "ether");
-  const humanFriendlyBalance = parseFloat(ethBalance).toFixed(FIXED_DIGITS);
+  // const balance = await window.xdex.methods.balanceOf(window.selectedAccount).call({from: window.selectedAccount});
+  // const ethBalance = web3.utils.fromWei(balance, "ether");
+  // const humanFriendlyBalance = parseFloat(ethBalance).toFixed(FIXED_DIGITS);
 
-  document.querySelector("#xp-balance").textContent = humanFriendlyBalance;
+  // document.querySelector("#xp-balance").textContent = humanFriendlyBalance;
 }
 
 
@@ -171,7 +179,7 @@ async function refreshAccountData() {
 
 
 //***METAMASK EIP1193
-  function handleAccountsChanged(accounts) {
+function handleAccountsChanged(accounts) {
     if (accounts.length === 0) {
       // MetaMask is locked or the user has not connected any accounts
       console.log('Please connect to MetaMask.');
@@ -192,7 +200,7 @@ async function refreshAccountData() {
           console.error(err);
         });
     }
-  }
+}
 
 /**
  * Connect wallet button pressed.
@@ -212,10 +220,15 @@ async function onConnect() {
     }
 
     //Handle chain (network) and chainChanged (per EIP-1193)
-    let chainId = await ethereum.request({ method: 'eth_chainId' });
+    ethereum
+      .request({ method: 'eth_chainId' })
+      .then((respone) => {
+        if (respone.result) {
+          window.chainId = parseInt(respone.result, 16);
+        }
+      })
 
     //Handle user accounts and accountsChanged (per EIP-1193)
-    let currentAccount = null;
     ethereum
       .request({ method: 'eth_accounts' })
       .then(handleAccountsChanged)
@@ -253,7 +266,6 @@ async function onConnect() {
     }
   }
 
-
   //*** web3Modal
 
   provider.on("accountsChanged", (accounts) => {
@@ -261,6 +273,7 @@ async function onConnect() {
   });
 
   provider.on("chainChanged", (chainId) => {
+    window.chainId = chainId;
     fetchAccountData();
   });
 
@@ -270,7 +283,6 @@ async function onConnect() {
   //
   // ethereum.on('chainChanged', handleChainChanged);
 
-
   await refreshAccountData();
 }
 
@@ -279,7 +291,6 @@ async function onConnect() {
  * Disconnect wallet button pressed.
  */
 async function onDisconnect() {
-
   // TODO: Which providers have close method?
   if(provider.close) {
     await provider.close();
