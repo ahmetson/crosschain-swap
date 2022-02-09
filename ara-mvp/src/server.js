@@ -1,26 +1,23 @@
 var bodyParser 				= require('body-parser');
+const cors 					= require('cors');
 var express  				= require('express');
 
-var nodeCleanup   			= require('node-cleanup');      // to close the database connection
 const blockchain    		= require('./blockchain');
 const ara                   = require('./ara');
-const trackingModel 		= require('./models/tracking');
-const { pairCreation }   	= require('./syncers/pair-creation');
-let gasUpdate 				= './gas-update';
 
 const { isPair } 			= require('./pair');
-
-console.log(`Connecting to kafka at http://${process.env.KAFKA_URL}:${process.env.KAFKA_PORT}`);
 
 const app 					= express();
 const port 					= parseInt(process.env.APP_PORT) || 3000;
 
 app.use(bodyParser.json());
+app.use(cors());
+app.options('*', cors());
 
 /**
  * Main page
  */
-app.get('/', () => {
+app.get('/', (_, res) => {
 	res.json({'status': 'OK!', 'author': 'Medet Ahmetson', 'link': 'https://github.com/ahmetson/xdex'});
 });
 
@@ -37,14 +34,14 @@ app.get('/', () => {
  * @param sourceTokenAddress a string of token address
  * @param sourceAmount a string representing amount in WEI format.
  */
-app.post('/create-lp', (req, res) => {
+app.post('/create-lp', async (req, res) => {
 	let txid = req.body.txid;
 	let sourceChainId = parseInt(req.body.sourceChainId);
-	let sourceAddress = req.body.sourceAddress;
+	let sourceTokenAddress = req.body.sourceTokenAddress;
 	let sourceAmount = req.body.sourceAmount;
-	let targetChainId = parseInt(req.body.sourceChainId);
+	let targetChainId = parseInt(req.body.targetChainId);
 
-	if (!txid || !sourceChainId || !sourceAddress || !sourceAmount || !targetChainId) {
+	if (!txid || !sourceChainId || !sourceTokenAddress || !sourceAmount || !targetChainId) {
 		return res.status(500).json({
 			status: 'ERROR',
 			message: 'Invalid parameter'
@@ -72,13 +69,16 @@ app.post('/create-lp', (req, res) => {
 	let receipt;
 	try {
 		receipt = await targetWeb3.eth.getTransactionReceipt(txid);
+		if (receipt === null) {
+			throw `No transaction`;
+		}
 	} catch (error) {
 		return res.status(500).json({
 			status: 'ERROR',
-			message: `Transaction doesn't exist! txid ${$txid}`
+			message: `Transaction doesn't exist! txid ${txid}`
 		});
 	}
-
+	
 	if (!receipt.status) {
 		return res.status(500).json({
 			status: 'ERROR',
@@ -103,13 +103,13 @@ app.post('/create-lp', (req, res) => {
 		});
 	}
 	// initiate on source chain
-	let sourceWeb3 = blockchain.initWeb3(targetChainId);
+	let sourceWeb3 = blockchain.initWeb3(sourceChainId);
 
 	// now getting the parameters for signature
 	let event = receipt.logs[0];
-	let walletAddress = event.topics[1];
-	let targetTokenAddress = event.topics[2];
-	let targetAmount = event.data;
+	let walletAddress = sourceWeb3.eth.abi.decodeParameter("address",	event.topics[1]);
+	let targetTokenAddress = sourceWeb3.eth.abi.decodeParameter("address", event.topics[2]);
+	let targetAmount = sourceWeb3.eth.abi.decodeParameter("uint256", event.data);
 
 	// todo
 	// check that transaction is a valid deposit transaction
@@ -133,12 +133,12 @@ app.post('/create-lp', (req, res) => {
 		});
 	}
 
-    let arachyls = await ara.get(web3);
+    let arachyls = await ara.get(sourceWeb3);
 
 	let sig = await ara.signCreation(nonce, walletAddress,
-		[sourceWeb.utils.toWei(sourceAmount), targetAmount],
+		[sourceAmount, targetAmount],
 		[sourceTokenAddress, targetTokenAddress],
-		arachyls[0]);
+		arachyls[0], sourceWeb3);
 
 	return res.json({
 		status: 'OK!',
@@ -147,7 +147,7 @@ app.post('/create-lp', (req, res) => {
 		sig_s: sig.s,
 		wallet_address: walletAddress,
 		targetAmount: sourceWeb3.utils.fromWei(targetAmount),
-		sourceAmount: sourceAmount,
+		sourceAmount: sourceWeb3.utils.fromWei(sourceAmount),
 		target_chain_id: targetChainId,
 		source_chain_id: sourceChainId,
 		target_token_address: targetTokenAddress,
@@ -169,7 +169,7 @@ app.post('/create-lp', (req, res) => {
  * @param sourceTokenAddress a string of token address
  * @param sourceAmount a string representing amount in WEI format.
  */
-app.post('/add-lp', (_req, res) => {
+app.post('/add-lp', async (_req, res) => {
 	let txid = req.body.txid;
 	let sourceChainId = parseInt(req.body.sourceChainId);
 	let sourceAddress = req.body.sourceAddress;
@@ -307,7 +307,7 @@ app.post('/add-lp', (_req, res) => {
  * @param sourceChainId a number representing network id
  * @param targetChainId a number representing network id
  */
-app.post('/remove-lp', (req, res) => {
+app.post('/remove-lp', async (req, res) => {
 	let txid = req.body.txid;
 	let sourceChainId = parseInt(req.body.sourceChainId);
 	let targetChainId = parseInt(req.body.sourceChainId);
@@ -430,7 +430,7 @@ app.post('/remove-lp', (req, res) => {
  * @param sourceChainId a number representing network id
  * @param targetChainId a number representing network id
  */
-app.post('/swap/to-target', (req, res) => {
+app.post('/swap/to-target', async (req, res) => {
 	let txid = req.body.txid;
 	let sourceChainId = parseInt(req.body.sourceChainId);
 	let targetChainId = parseInt(req.body.sourceChainId);
@@ -554,7 +554,7 @@ app.post('/swap/to-target', (req, res) => {
  * @param sourceChainId a number representing network id
  * @param targetChainId a number representing network id
  */
-app.post('/swap/to-source', (req, res) => {
+app.post('/swap/to-source', async (req, res) => {
 	let txid = req.body.txid;
 	let sourceChainId = parseInt(req.body.sourceChainId);
 	let pairAddress = req.body.sourceAddress;

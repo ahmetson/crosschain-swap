@@ -14,13 +14,13 @@ const reInit = function(remoteHttp) {
     }
   };
   
-  return new Web3(remoteHttp || process.env.REMOTE_HTTP, options);
+  return new Web3(remoteHttp || process.env.ETH_REMOTE_URL, options);
 }
 
 const initWeb3 = (chainId) => {
-  if (chainId === process.env.ETH_CHAIN_ID) {
+  if (chainId === parseInt(process.env.ETH_CHAIN_ID)) {
     return reInit(process.env.ETH_REMOTE_URL);
-  } else if (chainId === process.env.BSC_CHAIN_ID) {
+  } else if (chainId === parseInt(process.env.BSC_CHAIN_ID)) {
     return reInit(process.env.BSC_REMOTE_URL);
   }
 
@@ -61,9 +61,7 @@ const targetChainAbi = function() {
 
 const factoryAddr = function(networkId) {
   if (networkId === 4) {
-    return process.env.RINKEBY_FACTORY;
-  } else if (networkId === 97) {
-    return process.env.BSC_TESTNET_FACTORY;
+    return process.env.ETH_FACTORY;
   }
 
   throw `Factory address doesn't exist for chain ID ${networkId}`;

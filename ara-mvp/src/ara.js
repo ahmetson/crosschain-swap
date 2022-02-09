@@ -38,12 +38,12 @@ let signFee = async (factoryAddr, prevTimestamp, pairCreation, forArachyls, sign
     return sig;
 }
 
-let signCreation = async (nonce, user, amounts, tokens, signer) => {
+let signCreation = async (nonce, user, amounts, tokens, signer, web3) => {
     // depositNonceOf[msg.sender], params.amounts, msg.sender, params.tokens
-    let bytes32 = utils.defaultAbiCoder.encode(["uint256", "uint256[2]"], [nonce, amounts]);
+    let bytes32 = web3.eth.abi.encodeParameters(["uint256", "uint256[2]"], [nonce, amounts]);
     let str = bytes32 + user.substr(2) + tokens[0].substr(2) + tokens[1].substr(2);
-    let data = utils.keccak256(str);
-    sig = await signer.signMessage(utils.arrayify(data));
+    let data = web3.utils.keccak256(str);
+    sig = await signer.sign(data);
     
     sig.v = parseInt(sig.v, 16);
 
@@ -55,7 +55,7 @@ let signMint = async (nonce, user, amounts, signer) => {
     let bytes32 = utils.defaultAbiCoder.encode(["uint256", "uint256", "uint256"], [nonce, amounts[0], amounts[1]]);
     let str = bytes32 + user.substr(2);
     let data = utils.keccak256(str);
-    sig = await signer.signMessage(utils.arrayify(data));
+    sig = await signer.sign(data);
     
     sig.v = parseInt(sig.v, 16);
 
@@ -67,7 +67,7 @@ let signSwap = async (nonce, user, amount, signer) => {
     let bytes32 = utils.defaultAbiCoder.encode(["uint256", "uint256"], [nonce, amount]);
     let str = bytes32 + user.substr(2);
     let data = utils.keccak256(str);
-    sig = await signer.signMessage(utils.arrayify(data));
+    sig = await signer.sign(data);
     
     sig.v = parseInt(sig.v, 16);
 
@@ -79,7 +79,7 @@ let signWithdraw = async (nonce, user, amount, token, signer) => {
     let bytes32 = utils.defaultAbiCoder.encode(["uint256", "uint256"], [nonce, amount]);
     let str = bytes32 + user.substr(2) + token.substr(2);
     let data = utils.keccak256(str);
-    sig = await signer.signMessage(utils.arrayify(data));
+    sig = await signer.sign(data);
     
     sig.v = parseInt(sig.v, 16);
 

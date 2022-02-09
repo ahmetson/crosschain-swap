@@ -5,8 +5,8 @@ let blockchain  = require('../blockchain');
 let ara         = require('../ara');
 
 (async () => {
-    let rinkebyWeb3 = blockchain.reInit(process.env.REMOTE_HTTP);
-    // let bscWeb3     = blockchain.reInit(process.env.BSC_TESTNET_REMOTE_HTTP);
+    let rinkebyWeb3 = blockchain.reInit(process.env.ETH_REMOTE_URL);
+    // let bscWeb3     = blockchain.reInit(process.env.BSC_REMOTE_URL);
 
     let arachyls    = await ara.get(rinkebyWeb3);
 

@@ -11,7 +11,7 @@ let USER_PAIR_CREATION  = "3419909448362304";
 let FEE_UPDATE          = "215052909743664";
 
 const job = schedule.scheduleJob('*/7 * * * *', async () => {
-	let web3            = await blockchain.reInit(process.env.REMOTE_HTTP);
+	let web3            = await blockchain.reInit(process.env.ETH_REMOTE_URL);
     let rinkebyChainId  = await web.eth.getChainId();
 
     // load arachyls
