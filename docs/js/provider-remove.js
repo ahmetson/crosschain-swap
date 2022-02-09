@@ -1,22 +1,7 @@
 "use strict";
 
-/**
- * nav: Provider 
- * process: Creation
- * 
- * Listen events of process step update.
- */
 
-
-/**
- * Show the UI. Unless user didn't have the data set on.
- * 
- * Then move to the next page.
- * 
- * @param {cache-js.STEP} step 
- * @param {} data 
- */
-let showProviderCreate = function(step, data) {
+let showProviderRemove = function() {
     // 
     //  Source
     //
@@ -52,23 +37,13 @@ let showProviderCreate = function(step, data) {
         targetList.appendChild(option);
     }
 
+    // load factory or targetchain
+
     // show first step button on process
-    if (step === null || step === STEP.APPROVE_TARGET) {
-        createInitProcess();
-    } else if (step === STEP.DEPOSIT) {
-        createDepositProcess(data);
-    } else if (step === STEP.BLOCK_WAITING) {
-        createWaitingProcess(data);
-    } else if (step === STEP.APPROVE_SOURCE) {
-        createApproveSourceProcess();
-    } else if (step === STEP.SIG) {
-        createWaitingSigProcess(data);
-    } else if (step === STEP.ACTION) {
-        createFinalProcess(data);
-    }
+    createLpInitProcess();
 };
 
-let createInitProcess = function() {
+let createLpInitProcess = function() {
     let btns = getCreateBtns();
     
     // show
@@ -101,29 +76,23 @@ let createDepositProcess = function() {
 let createWaitingProcess = function() {
     let btns = getCreateBtns();
     
-    let cacheDetail = getProcessStep();
-    let data = cacheDetail.data;
-
     disableBtn(btns['approveTarget'], onCreateTargetApprove);
     disableBtn(btns['depositTarget'], onCreateTargetDeposit);
     btns['waiting'].style.display = "";
     btns['waitingBlocks'].style.display = "";
 
-    if (!data.blockNumber) {
+    if (!window.blockNumber) {
         return printErrorMessage(`Missing the block number. Please start from beginning`);
     }
 
     let interval = setInterval(async () => {
         let currentBlockNumber = await web3.eth.getBlockNumber();
 
-        if (currentBlockNumber - data.blockNumber > 12) {
+        if (currentBlockNumber - window.blockNumber > 12) {
             clearInterval(interval);
-
-            let nextStep = getProviderCreateNextStep(STEP.BLOCK_WAITING)
-            setProcessStep(NAV.PROVIDER, PROCESS.CREATE, nextStep, data);
-            showProviderCreate(nextStep, data);
+            createApproveSourceProcess();
         } else {
-            let left = currentBlockNumber - data.blockNumber;
+            let left = currentBlockNumber - window.blockNumber;
             btns['waitingBlocks'].innerText = left;
         }
     }, 1000);
@@ -186,8 +155,6 @@ let getCreateBtns = function() {
 let onCreateTargetApprove = async function() {
     window.errorModalEl.removeEventListener('hidden.bs.modal', onCreateTargetApprove);
 
-    let nextStep = getProviderCreateNextStep(STEP.APPROVE_TARGET)
-
     // check that user is in the source chain.
     if (isSource(chainId)) {
         window.errorModalEl.addEventListener('hidden.bs.modal', onCreateTargetApprove);
@@ -203,8 +170,6 @@ let onCreateTargetApprove = async function() {
     }
     let targetTokenAmountWei = web3.utils.toWei(targetTokenAmount.toString());
 
-    let sourceTokenEl = document.getElementById('provider-create-source-list');
-    let sourceTokenAmount = parseFloat(document.getElementById('provider-create-source-amount').value);
     let targetTokenEl = document.getElementById('provider-create-target-list');
     
     window.tokens[targetTokenEl.value].methods.approve(window.xdex._address, targetTokenAmountWei)
@@ -215,17 +180,7 @@ let onCreateTargetApprove = async function() {
         .on('receipt', async function(receipt){
             showToast("Approved", `See TX on <a href="https://rinkeby.etherscan.io/tx/${receipt.transactionHash}" target="_blank">explorer</a><br>`);
 
-            // get next position:
-            // save source token, target token, user, source amount, target amount
-            let data = {
-                sourceToken: sourceTokenEl.value,
-                sourceAmount: sourceTokenAmount,
-                targetToken: targetTokenEl.value,
-                targetAmount: targetTokenAmount,
-                selectedAccount: window.selectedAccount
-            }
-            setProcessStep(NAV.PROVIDER, PROCESS.CREATE, nextStep, data);
-            showProviderCreate(nextStep, data);
+            createDepositProcess();
         })
         .on('error', function(error, _receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
             printErrorMessage(error.message);
@@ -236,9 +191,6 @@ let onCreateTargetApprove = async function() {
 let onCreateSourceApprove = async function() {
     window.errorModalEl.removeEventListener('hidden.bs.modal', onCreateSourceApprove);
 
-    let cacheDetail = getProcessStep();
-    let data = cacheDetail.data;
-
     // check that user is in the source chain.
     if (!isSource(chainId)) {
         window.errorModalEl.addEventListener('hidden.bs.modal', onCreateSourceApprove);
@@ -248,19 +200,24 @@ let onCreateSourceApprove = async function() {
         return printErrorMessage(errMessage,  onCreateSourceApprove);
     }
 
-    let tokenAmountWei = web3.utils.toWei(data.sourceAmount.toString());
+    let tokenAmount = parseFloat(document.getElementById('provider-create-source-amount').value);
+    if (isNaN(tokenAmount)) {
+        return printErrorMessage(`Invalid Target Amount`);
+    }
+    let tokenAmountWei = web3.utils.toWei(tokenAmount.toString());
+
+    let tokenEl = document.getElementById('provider-create-source-list');
     
-    window.tokens[data.sourceToken].methods.approve(window.xdex._address, tokenAmountWei)
+    window.tokens[tokenEl.value].methods.approve(window.xdex._address, tokenAmountWei)
         .send({from: window.selectedAccount})
         .on('transactionHash', function(hash) {
             showToast("Approving...", `See TX on <a href="https://rinkeby.etherscan.io/tx/${hash}" target="_blank">explorer</a>`);
         })
         .on('receipt', async function(receipt){
+            console.log(receipt);
             showToast("Approved", `See TX on <a href="https://rinkeby.etherscan.io/tx/${receipt.transactionHash}" target="_blank">explorer</a><br>`);
 
-            let nextStep = getProviderCreateNextStep(STEP.APPROVE_SOURCE)
-            setProcessStep(NAV.PROVIDER, PROCESS.CREATE, nextStep, data);
-            showProviderCreate(nextStep, data);
+            createWaitingSigProcess();
         })
         .on('error', function(error, _receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
             printErrorMessage(error.message);
@@ -269,25 +226,23 @@ let onCreateSourceApprove = async function() {
 }
 
 let onCreateTargetDeposit = async function() {
-    let cacheDetail = getProcessStep();
-    let data = cacheDetail.data;
-    let targetTokenAmountWei = web3.utils.toWei(data.targetAmount.toString());
+    let targetTokenAmount = parseFloat(document.getElementById('provider-create-target-amount').value);
+    let targetTokenAmountWei = web3.utils.toWei(targetTokenAmount.toString());
 
-    window.xdex.methods.deposit(data.targetToken, targetTokenAmountWei)
+    let targetTokenEl = document.getElementById('provider-create-target-list');
+    
+    window.xdex.methods.deposit(targetTokenEl.value, targetTokenAmountWei)
         .send({from: window.selectedAccount})
         .on('transactionHash', function(hash) {
-            data.hash = hash;
-
+            window.hash = hash;
             showToast("Depositing...", `See TX on <a href="https://rinkeby.etherscan.io/tx/${hash}" target="_blank">explorer</a>`);
         })
         .on('receipt', async function(receipt){
+            console.log(receipt);
             showToast("Deposited", `See TX on <a href="https://rinkeby.etherscan.io/tx/${receipt.transactionHash}" target="_blank">explorer</a><br>`);
 
-            data.blockNumber = receipt.blockNumber;
-
-            let nextStep = getProviderCreateNextStep(STEP.DEPOSIT)
-            setProcessStep(NAV.PROVIDER, PROCESS.CREATE, nextStep, data);
-            showProviderCreate(nextStep, data);
+            window.blockNumber = receipt.blockNumber;
+            createWaitingProcess();
         })
         .on('error', function(error, _receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
             printErrorMessage(error.message);
@@ -296,26 +251,23 @@ let onCreateTargetDeposit = async function() {
 }
 
 let onCreate = async function() {
-    let cacheDetail = getProcessStep();
-    let data = cacheDetail.data;
-
     let params = [
-        [data.araResponse.source_token_address, data.araResponse.target_token_address],
-        [web3.utils.toWei(data.araResponse.sourceAmount), web3.utils.toWei(data.araResponse.targetAmount)],
-        data.araResponse.sig_v, data.araResponse.sig_r, data.araResponse.sig_s
+        [window.araResponse.source_token_address, window.araResponse.target_token_address],
+        [web3.utils.toWei(window.araResponse.sourceAmount), web3.utils.toWei(window.araResponse.targetAmount)],
+        window.araResponse.sig_v, window.araResponse.sig_r, window.araResponse.sig_s
     ]
 
     window.xdex.methods.create(params)
         .send({from: window.selectedAccount})
         .on('transactionHash', function(hash) {
+            window.hash = hash;
             showToast("Creating...", `See TX on <a href="https://rinkeby.etherscan.io/tx/${hash}" target="_blank">explorer</a>`);
         })
         .on('receipt', async function(receipt){
+            console.log(receipt);
             showToast("Created", `See TX on <a href="https://rinkeby.etherscan.io/tx/${receipt.transactionHash}" target="_blank">explorer</a><br>`);
 
-            let nextStep = getProviderCreateNextStep(STEP.ACTION)
-            setProcessStep(NAV.PROVIDER, PROCESS.CREATE, nextStep, data);
-            showProviderCreate(nextStep, data);
+            createLpInitProcess();
         })
         .on('error', function(error, _receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
             printErrorMessage(error.message);
@@ -327,33 +279,29 @@ let fetchCreateSig = async function() {
     let targetId = parseInt(getSourceConf().pairedTo);
     let sourceId = parseInt(getTargetConf().pairedTo);
 
-    let cacheDetail = getProcessStep();
-    let data = cacheDetail.data;
+    let tokenAmount = web3.utils.toWei(document.getElementById('provider-create-source-amount').value);
+    let tokenEl = document.getElementById('provider-create-source-list');
 
     let type = 'create-lp';
     let params = {
-        "txid": cacheDetail.data.hash,
+        "txid": window.hash,
         "sourceChainId": sourceId,
-        "sourceTokenAddress": cacheDetail.data.sourceToken,
-        "sourceAmount": web3.utils.toWei(cacheDetail.data.sourceAmount.toString()),
+        "sourceTokenAddress": tokenEl.value,
+        "sourceAmount": tokenAmount,
         "targetChainId": targetId
     }
 
     try {
-        let araResponse = await fetchSig(type, params);
+        window.araResponse = await fetchSig(type, params);
 
-        if (araResponse.status === 'ERROR') {
-            printErrorMessage(araResponse.message);
+        if (window.araResponse.status === 'ERROR') {
+            printErrorMessage(window.araResponse.message);
         } else {
-            if (selectedAccount !== araResponse.wallet_address) {
-                return printErrorMessage(`Signature returned for ${araResponse.wallet_address}`);
+            if (window.selectedAccount !== window.araResponse.wallet_address) {
+                return printErrorMessage(`Signature returned for ${window.araResponse.wallet_address}`);
             }
 
-            data.araResponse = araResponse;
-
-            let nextStep = getProviderCreateNextStep(STEP.SIG)
-            setProcessStep(NAV.PROVIDER, PROCESS.CREATE, nextStep, cacheDetail.data);
-            showProviderCreate(nextStep, cacheDetail.data);
+            createFinalProcess();
         }
     } catch (error) {
         printErrorMessage(error);
@@ -378,11 +326,4 @@ window.addEventListener('load', async () => {
         }
       })
     }
-
-    let content = document.getElementById('myTabContent');
-
-    // Create a new event, allow bubbling, and provide any data you want to pass to the "detail" property
-    content.addEventListener(`${NAV.PROVIDER}.${PROCESS.CREATE}`, async (e) => {
-        showProviderCreate(e.detail.step, e.detail.data)
-    })
 });

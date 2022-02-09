@@ -32,9 +32,19 @@ window.claimable = function(pool, grant) {
 window.init = async function() {
     loadContracts();
 
-    showProviderCreateLp();
-    // document.querySelector("#pool-info-name").textContent = selectedPool;
-    // document.querySelector("#pool-info-contract").textContent = window.vesting._address;
+    let processStep = getProcessStep();
+
+    //  a process, show it.
+    if (processStep.process) {
+        let content = document.getElementById('myTabContent');
+
+        content.dispatchEvent(new CustomEvent(`${processStep.nav}.${processStep.process}`, {
+            bubbles: true,
+            detail: processStep
+        } ))
+    } else {
+        console.warn(`Manager doesn't recognise: ${processStep.PROCESS} -> ${processStep.STEP}`);
+    }
 }
 
 window.enableBtn = function(btn, callback) {
@@ -56,7 +66,6 @@ window.onMainTabSwitch = async function(event) {
     console.log(event.target);
     let tabId = event.target.getAttribute("aria-controls");
     let tab = document.querySelector("#" + tabId);
-    console.log(tab);
 };
 
 function secondsToDhms(seconds) {
