@@ -29,7 +29,7 @@ services:
   ui:
     build:
       context: ./docs
-    container_name: "docs"
+    container_name: "ui"
     volumes:
       - type: bind
         source: ./docs
