@@ -7,8 +7,8 @@ import './libraries/SafeMath.sol';
 contract UniswapV2ERC20 is IUniswapV2ERC20 {
     using SafeMath for uint;
 
-    string public override constant name = 'Uniswap V2';
-    string public override constant symbol = 'UNI-V2';
+    string public override name = 'Uniswap V2';
+    string public override symbol = 'UNI-V2';
     uint8 public override constant decimals = 18;
     uint  public override totalSupply;
     mapping(address => uint) override public balanceOf;
