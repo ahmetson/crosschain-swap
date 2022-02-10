@@ -2,7 +2,7 @@
 
 /**
  * nav: Provider 
- * process: Creation
+ * process: Removal
  * 
  * Listen events of process step update.
  */
