@@ -106,7 +106,7 @@ app.post('/create-lp', async (req, res) => {
 	let sourceWeb3 = blockchain.initWeb3(sourceChainId);
 
 	// now getting the parameters for signature
-	let event = receipt.logs[0];
+	let event = receipt.logs[1];
 	let walletAddress = sourceWeb3.eth.abi.decodeParameter("address",	event.topics[1]);
 	let targetTokenAddress = sourceWeb3.eth.abi.decodeParameter("address", event.topics[2]);
 	let targetAmount = sourceWeb3.eth.abi.decodeParameter("uint256", event.data);
