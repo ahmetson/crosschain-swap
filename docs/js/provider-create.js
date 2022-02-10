@@ -313,8 +313,8 @@ let onCreate = async function() {
         .on('receipt', async function(receipt){
             showToast("Created", `See TX on <a href="https://rinkeby.etherscan.io/tx/${receipt.transactionHash}" target="_blank">explorer</a><br>`);
 
+            clearProcessStep();
             let nextStep = getProviderCreateNextStep(STEP.ACTION)
-            setProcessStep(NAV.PROVIDER, PROCESS.CREATE, nextStep, data);
             showProviderCreate(nextStep, data);
         })
         .on('error', function(error, _receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
@@ -364,21 +364,6 @@ let fetchCreateSig = async function() {
  * listen for events
  */
 window.addEventListener('load', async () => {
-    // document.querySelector("#scape-transfer").addEventListener("click", onTransfer);
-    // document.querySelector("#fetch-scape-id").addEventListener("click", onFetch);
-
-    let toastEl = document.querySelector("#toast");
-    window.toast = new bootstrap.Toast(toastEl);
-
-    var tabElems = document.querySelectorAll('#myTab button[data-bs-toggle="tab"]')
-    for (var tabEl of tabElems) {
-      tabEl.addEventListener('shown.bs.tab', function (event) {
-        if (window.onMainTabSwitch) {
-          window.onMainTabSwitch(event);
-        }
-      })
-    }
-
     let content = document.getElementById('myTabContent');
 
     // Create a new event, allow bubbling, and provide any data you want to pass to the "detail" property

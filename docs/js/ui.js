@@ -62,10 +62,65 @@ window.disableBtn = function(btn, callback) {
 //
 // event.target // newly activated tab
 // event.relatedTarget // previous active tab
-window.onMainTabSwitch = async function(event) {
+window.onNavSwitch = async function(event) {
     console.log(event.target);
     let tabId = event.target.getAttribute("aria-controls");
     let tab = document.querySelector("#" + tabId);
+
+    let processStep = getProcessStep();
+    let defaultProcess = null;
+
+    if (tabId == NAV.PROVIDER) {
+        defaultProcess = defaultProviderProcess();
+    } else if (tabId == NAV.DEVELOPER) {
+        defaultProcess = defaultDeveloperProcess();
+    } else if (tabId == NAV.USER) {
+        defaultProcess = defaultUserProcess();
+    }
+
+    let content = document.getElementById('myTabContent');
+
+    if (defaultProcess.nav == processStep.nav) {
+        console.log(`Show selected nav ${processStep.nav} -> ${processStep.process}`);
+        content.dispatchEvent(new CustomEvent(`${processStep.nav}.${processStep.process}`, {
+            bubbles: true,
+            detail: processStep
+        } ))
+    } else {
+        console.log(`Show default nav ${defaultProcess.nav} -> ${defaultProcess.process}`);
+        content.dispatchEvent(new CustomEvent(`${defaultProcess.nav}.${defaultProcess.process}`, {
+            bubbles: true,
+            detail: defaultProcess
+        } ))
+    }
+};
+
+
+window.onProviderSwitch = async function(event) {
+    console.log(event.target);
+    let tabId = event.target.getAttribute("aria-controls");
+
+    let processStep = getProcessStep();
+    let defaultProcess = defaultProviderProcess();
+
+    defaultProcess.process = tabId;
+    defaultProcess.step = getProvderNextStep(tabId, null);
+
+    let content = document.getElementById('myTabContent');
+
+    if (processStep.process == tabId) {
+        console.log(`Show selected provider process ${processStep.nav} -> ${processStep.process}`);
+        content.dispatchEvent(new CustomEvent(`${processStep.nav}.${processStep.process}`, {
+            bubbles: true,
+            detail: processStep
+        } ))
+    } else {
+        console.log(`Show default provider process ${defaultProcess.nav} -> ${defaultProcess.process}`);
+        content.dispatchEvent(new CustomEvent(`${defaultProcess.nav}.${defaultProcess.process}`, {
+            bubbles: true,
+            detail: defaultProcess
+        } ))
+    }
 };
 
 function secondsToDhms(seconds) {
@@ -89,17 +144,23 @@ function secondsToDhms(seconds) {
  * Main entry point.
  */
 window.addEventListener('load', async () => {
-    // document.querySelector("#scape-transfer").addEventListener("click", onTransfer);
-    // document.querySelector("#fetch-scape-id").addEventListener("click", onFetch);
-
     let toastEl = document.querySelector("#toast");
     window.toast = new bootstrap.Toast(toastEl);
 
     var tabElems = document.querySelectorAll('#myTab button[data-bs-toggle="tab"]')
     for (var tabEl of tabElems) {
       tabEl.addEventListener('shown.bs.tab', function (event) {
-        if (window.onMainTabSwitch) {
-          window.onMainTabSwitch(event);
+        if (window.onNavSwitch) {
+          window.onNavSwitch(event);
+        }
+      })
+    }
+
+    var tabElems = document.querySelectorAll('#provider-tab button[data-bs-toggle="tab"]')
+    for (var tabEl of tabElems) {
+      tabEl.addEventListener('shown.bs.tab', function (event) {
+        if (window.onProviderSwitch) {
+          window.onProviderSwitch(event);
         }
       })
     }

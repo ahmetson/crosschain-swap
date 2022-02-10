@@ -74,11 +74,11 @@ let signSwap = async (nonce, user, amount, signer) => {
     return sig;
 }
 
-let signWithdraw = async (nonce, user, amount, token, signer) => {
+let signWithdraw = async (nonce, user, amount, token, signer, web3) => {
     // depositNonceOf[msg.sender], params.amounts, msg.sender, params.tokens
-    let bytes32 = utils.defaultAbiCoder.encode(["uint256", "uint256"], [nonce, amount]);
+    let bytes32 = web3.eth.abi.encodeParameters(["uint256", "uint256"], [nonce, amount]);
     let str = bytes32 + user.substr(2) + token.substr(2);
-    let data = utils.keccak256(str);
+    let data = web3.utils.keccak256(str);
     sig = await signer.sign(data);
     
     sig.v = parseInt(sig.v, 16);

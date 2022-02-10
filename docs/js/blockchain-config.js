@@ -29,7 +29,8 @@ let blockchainConfig = {
             address: "0xE60E564454286aDfb3Ff02991a07AC5F17B09C80",
             abi: "factory"
         },
-        tokenAbi: "erc20"
+        tokenAbi: "erc20",
+        pairAbi: "pairAbi"
     },
     "97": {
         "name": "BSC Testnet",
@@ -103,6 +104,22 @@ let loadContracts = async function() {
     for (var token of data.tokens) {
         window.tokens[token.address] = new web3.eth.Contract(tokenAbi, token.address);
     }
+}
+
+let loadPair = function(pairAddress) {
+    if (!web3) {
+        throw "Failed to load Web3 library. Please check your internet connection!";
+    }
+    if (web3.eth === undefined) {
+        throw "Provider not instantiniated. Please connect the wallet";
+    }
+
+    let data = getSourceConf();
+
+    let abiName = data.pairAbi;
+    let abi = window[abiName];
+
+    window.pair = new web3.eth.Contract(abi, pairAddress);
 }
 
 let araUrl = 'http://localhost:3000/'

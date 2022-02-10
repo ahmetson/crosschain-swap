@@ -1,16 +1,31 @@
 "use strict";
 
+/**
+ * nav: Provider 
+ * process: Creation
+ * 
+ * Listen events of process step update.
+ */
 
-let showProviderRemove = function() {
+
+/**
+ * Show the UI. Unless user didn't have the data set on.
+ * 
+ * Then move to the next page.
+ * 
+ * @param {cache-js.STEP} step 
+ * @param {} data 
+ */
+let showProviderRemove = function(step, data) {
     // 
     //  Source
     //
     let sourceConf = getSourceConf();
     
-    let sourceChainName = document.getElementById("provider-create-source-name");
+    let sourceChainName = document.getElementById("provider-remove-source-name");
     sourceChainName.setAttribute("value", sourceConf.name);
 
-    let sourceList = document.getElementById("provider-create-source-list")
+    let sourceList = document.getElementById("provider-remove-source-list")
     sourceList.textContent = "";
 
     for (var token of sourceConf.tokens) {
@@ -23,10 +38,10 @@ let showProviderRemove = function() {
 
     let targetConf = getTargetConf();
 
-    let targetChainName = document.getElementById("provider-create-target-name");
+    let targetChainName = document.getElementById("provider-remove-target-name");
     targetChainName.setAttribute("value", targetConf.name);
 
-    let targetList = document.getElementById("provider-create-target-list")
+    let targetList = document.getElementById("provider-remove-target-list")
     targetList.textContent = "";
 
     for (var token of targetConf.tokens) {
@@ -37,212 +52,184 @@ let showProviderRemove = function() {
         targetList.appendChild(option);
     }
 
-    // load factory or targetchain
-
     // show first step button on process
-    createLpInitProcess();
+    if (step === null || step === STEP.ACTION) {
+        removeInitProcess();
+    } else if (step === STEP.BLOCK_WAITING) {
+        removeWaitingProcess(data);
+    } else if (step === STEP.SIG) {
+        removeWaitingSigProcess(data);
+    } else if (step === STEP.WITHDRAW) {
+        removeWithdrawProcess(data);
+    } 
 };
 
-let createLpInitProcess = function() {
-    let btns = getCreateBtns();
-    
-    // show
-    enableBtn(btns['approveTarget'], onCreateTargetApprove);
+let showRemovePairAddress = async function() {
+    let sourceToken = document.getElementById('provider-remove-source-list')
+    let targetToken = document.getElementById('provider-remove-target-list')
 
-    // the rest are hided
-    disableBtn(btns['depositTarget'], alert);
+    let empty = '0x0000000000000000000000000000000000000000';
+
+    document.getElementById('provider-remove-lp-address').innerText = empty;
+    document.getElementById('provider-remove-balance').innerText = "";
+
+    let pairAddress = await xdex.methods.getPair(sourceToken.value, targetToken.value).call();
+
+    if (pairAddress === empty) {
+        let errMessage = `The pair of ${sourceToken.value}-${targetToken.value} doesn't exist. please create it.`;
+
+        return printErrorMessage(errMessage);
+    }
+
+    document.getElementById('provider-remove-lp-address').innerText = pairAddress;
+
+    // now load the pair contract.
+    loadPair(pairAddress);
+
+    // show user balance:
+    let balance = await window.pair.methods.balanceOf(selectedAccount).call();
+    let balanceWei = web3.utils.fromWei(balance);
+    document.getElementById('provider-remove-balance').innerText = balanceWei;
+}
+
+let removeWithdrawProcess = async function() {
+    let btns = getRemoveBtns();
+    
+    enableBtn(btns['withdrawTarget'], onRemoveWithdraw);
     btns['waiting'].style.display = "none";
     btns['waitingBlocks'].style.display = "none";
     btns['waitingSig'].style.display = "none";
-    btns['approveSource'].style.display = "none";
-    btns['create'].style.display = "none";
+    disableBtn(btns['remove'], onRemove);
+
+    await fetchRemoveSig();
 }
 
-let createDepositProcess = function() {
-    let btns = getCreateBtns();
-    
-    // show
-    disableBtn(btns['approveTarget'], onCreateTargetApprove);
+let removeWaitingProcess = function() {
+    showRemovePairAddress();
 
-    // the rest are hided
-    enableBtn(btns['depositTarget'], onCreateTargetDeposit);
-    btns['waiting'].style.display = "none";
-    btns['waitingBlocks'].style.display = "none";
-    btns['waitingSig'].style.display = "none";
-    btns['approveSource'].style.display = "none";
-    btns['create'].style.display = "none";
-}
-
-let createWaitingProcess = function() {
-    let btns = getCreateBtns();
+    let btns = getRemoveBtns();
     
-    disableBtn(btns['approveTarget'], onCreateTargetApprove);
-    disableBtn(btns['depositTarget'], onCreateTargetDeposit);
+    let cacheDetail = getProcessStep();
+    let data = cacheDetail.data;
+
+    disableBtn(btns['withdrawTarget'], onRemoveWithdraw);
     btns['waiting'].style.display = "";
     btns['waitingBlocks'].style.display = "";
 
-    if (!window.blockNumber) {
+    if (!data.blockNumber) {
         return printErrorMessage(`Missing the block number. Please start from beginning`);
     }
 
     let interval = setInterval(async () => {
         let currentBlockNumber = await web3.eth.getBlockNumber();
 
-        if (currentBlockNumber - window.blockNumber > 12) {
+        if (currentBlockNumber - data.blockNumber > 12) {
             clearInterval(interval);
-            createApproveSourceProcess();
+
+            let nextStep = getProviderRemoveNextStep(STEP.BLOCK_WAITING)
+            setProcessStep(NAV.PROVIDER, PROCESS.REMOVE, nextStep, data);
+            showProviderRemove(nextStep, data);
         } else {
-            let left = currentBlockNumber - window.blockNumber;
+            let left = currentBlockNumber - data.blockNumber;
             btns['waitingBlocks'].innerText = left;
         }
     }, 1000);
     btns['waitingSig'].style.display = "none";
-    btns['approveSource'].style.display = "none";
-    btns['create'].style.display = "none";
+    disableBtn(btns['remove'], onRemove);
 }
 
-let createApproveSourceProcess = function() {
-    let btns = getCreateBtns();
+let removeWaitingSigProcess = async function() {
+    showRemovePairAddress();
     
-    disableBtn(btns['approveTarget'], onCreateTargetApprove);
-    disableBtn(btns['depositTarget'], onCreateTargetDeposit);
-    btns['waiting'].style.display = "none";
-    btns['waitingSig'].style.display = "none";
-    enableBtn(btns['approveSource'], onCreateSourceApprove);
-    btns['create'].style.display = "none";
-}
-
-let createWaitingSigProcess = async function() {
-    let btns = getCreateBtns();
+    let btns = getRemoveBtns();
     
-    disableBtn(btns['approveTarget'], onCreateTargetApprove);
-    disableBtn(btns['depositTarget'], onCreateTargetDeposit);
-    btns['waiting'].style.display = "none";
-    btns['waitingSig'].style.display = "";
-    disableBtn(btns['approveSource'], onCreateSourceApprove);
-    btns['create'].style.display = "none";
-
-    await fetchCreateSig();
-}
-
-let createFinalProcess = function() {
-    let btns = getCreateBtns();
-    
-    // show
-    disableBtn(btns['approveTarget'], onCreateTargetApprove);
-
-    // the rest are hided
-    disableBtn(btns['depositTarget'], onCreateTargetDeposit);
+    disableBtn(btns['withdrawTarget'], onRemoveWithdraw);
     btns['waiting'].style.display = "none";
     btns['waitingBlocks'].style.display = "none";
-    btns['waitingSig'].style.display = "none";
-    disableBtn(btns['approveSource'], onCreateSourceApprove);
-    enableBtn(btns['create'], onCreate);
+    btns['waitingSig'].style.display = "";
+    disableBtn(btns['remove'], onRemove);
+
+    await fetchRemoveSig();
 }
 
-let getCreateBtns = function() {
-    return {
-        approveTarget: document.getElementById("btn-create-approve-target"),
-        depositTarget: document.getElementById("btn-create-deposit-target"),
-        waiting: document.getElementById("btn-create-waiting"),
-        waitingBlocks: document.getElementById("provider-create-left-blocks"),
-        waitingSig: document.getElementById("btn-create-sig"),
-        approveSource: document.getElementById("btn-create-approve-source"),
-        create: document.getElementById("btn-create")
-    }
-}
-
-let onCreateTargetApprove = async function() {
-    window.errorModalEl.removeEventListener('hidden.bs.modal', onCreateTargetApprove);
-
-    // check that user is in the source chain.
-    if (isSource(chainId)) {
-        window.errorModalEl.addEventListener('hidden.bs.modal', onCreateTargetApprove);
-
-        let errMessage = `You are on ${getSourceConf().name}' network. Please switch to '${getTargetConf().name}'`;
-
-        return printErrorMessage(errMessage,  onCreateTargetApprove);
-    }
-
-    let targetTokenAmount = parseFloat(document.getElementById('provider-create-target-amount').value);
-    if (isNaN(targetTokenAmount)) {
-        return printErrorMessage(`Invalid Target Amount`);
-    }
-    let targetTokenAmountWei = web3.utils.toWei(targetTokenAmount.toString());
-
-    let targetTokenEl = document.getElementById('provider-create-target-list');
-    
-    window.tokens[targetTokenEl.value].methods.approve(window.xdex._address, targetTokenAmountWei)
-        .send({from: window.selectedAccount})
-        .on('transactionHash', function(hash) {
-            showToast("Approving...", `See TX on <a href="https://rinkeby.etherscan.io/tx/${hash}" target="_blank">explorer</a>`);
-        })
-        .on('receipt', async function(receipt){
-            showToast("Approved", `See TX on <a href="https://rinkeby.etherscan.io/tx/${receipt.transactionHash}" target="_blank">explorer</a><br>`);
-
-            createDepositProcess();
-        })
-        .on('error', function(error, _receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
-            printErrorMessage(error.message);
-            console.error(error.message);
-    });
-}
-
-let onCreateSourceApprove = async function() {
-    window.errorModalEl.removeEventListener('hidden.bs.modal', onCreateSourceApprove);
+let removeInitProcess = async function() {
+    window.errorModalEl.removeEventListener('hidden.bs.modal', removeInitProcess);
 
     // check that user is in the source chain.
     if (!isSource(chainId)) {
-        window.errorModalEl.addEventListener('hidden.bs.modal', onCreateSourceApprove);
-
-        let errMessage = `You are on ${getTargetConf().name}' network. Please switch to '${getSourceConf().name}'`;
-
-        return printErrorMessage(errMessage,  onCreateSourceApprove);
-    }
-
-    let tokenAmount = parseFloat(document.getElementById('provider-create-source-amount').value);
-    if (isNaN(tokenAmount)) {
-        return printErrorMessage(`Invalid Target Amount`);
-    }
-    let tokenAmountWei = web3.utils.toWei(tokenAmount.toString());
-
-    let tokenEl = document.getElementById('provider-create-source-list');
+        window.errorModalEl.addEventListener('hidden.bs.modal', removeInitProcess);
     
-    window.tokens[tokenEl.value].methods.approve(window.xdex._address, tokenAmountWei)
-        .send({from: window.selectedAccount})
-        .on('transactionHash', function(hash) {
-            showToast("Approving...", `See TX on <a href="https://rinkeby.etherscan.io/tx/${hash}" target="_blank">explorer</a>`);
-        })
-        .on('receipt', async function(receipt){
-            console.log(receipt);
-            showToast("Approved", `See TX on <a href="https://rinkeby.etherscan.io/tx/${receipt.transactionHash}" target="_blank">explorer</a><br>`);
+        let errMessage = `You are on ${getTargetConf().name}' network. Please switch to '${getSourceConf().name}'`;
+    
+        return printErrorMessage(errMessage,  removeInitProcess);
+    }
+    let btns = getRemoveBtns();
 
-            createWaitingSigProcess();
-        })
-        .on('error', function(error, _receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
-            printErrorMessage(error.message);
-            console.error(error.message);
-    });
+    await showRemovePairAddress();
+    
+    disableBtn(btns['withdrawTarget'], onRemoveWithdraw);
+    btns['waiting'].style.display = "none";
+    btns['waitingBlocks'].style.display = "none";
+    btns['waitingSig'].style.display = "none";
+    enableBtn(btns['remove'], onRemove);
 }
 
-let onCreateTargetDeposit = async function() {
-    let targetTokenAmount = parseFloat(document.getElementById('provider-create-target-amount').value);
-    let targetTokenAmountWei = web3.utils.toWei(targetTokenAmount.toString());
+let getRemoveBtns = function() {
+    return {
+        withdrawTarget: document.getElementById("btn-remove-withdraw-target"),
+        waiting: document.getElementById("btn-remove-waiting"),
+        waitingBlocks: document.getElementById("provider-remove-left-blocks"),
+        waitingSig: document.getElementById("btn-remove-sig"),
+        remove: document.getElementById("btn-remove")
+    }
+}
 
-    let targetTokenEl = document.getElementById('provider-create-target-list');
+let onRemove = async function() {
+    window.errorModalEl.removeEventListener('hidden.bs.modal', onRemove);
+
+    let sourceToken = document.getElementById('provider-remove-source-list')
+    let targetToken = document.getElementById('provider-remove-target-list')
+
+    let amount = parseFloat(document.getElementById('provider-remove-amount').value);
+    if (isNaN(amount)) {
+        let errMessage = `Invalid Remove amount'`;
+
+        return printErrorMessage(errMessage,  onRemove);
+    }
+
+    // check that user is in the source chain.
+    if (!isSource(chainId)) {
+        window.errorModalEl.addEventListener('hidden.bs.modal', onRemove);
     
-    window.xdex.methods.deposit(targetTokenEl.value, targetTokenAmountWei)
+        let errMessage = `You are on ${getTargetConf().name}' network. Please switch to '${getSourceConf().name}'`;
+    
+        return printErrorMessage(errMessage,  onRemove);
+    }
+
+    // we are getting the pair address.
+
+    let cacheDetail = defaultProviderProcess();
+    cacheDetail.process = PROCESS.REMOVE;
+    cacheDetail.step = getProvderNextStep(cacheDetail.process);
+    let data = cacheDetail.data;
+
+    let amountWei = web3.utils.toWei(amount.toString());
+
+    window.pair.methods.burn(amountWei)
         .send({from: window.selectedAccount})
         .on('transactionHash', function(hash) {
-            window.hash = hash;
+            data.hash = hash;
+
             showToast("Depositing...", `See TX on <a href="https://rinkeby.etherscan.io/tx/${hash}" target="_blank">explorer</a>`);
         })
         .on('receipt', async function(receipt){
-            console.log(receipt);
             showToast("Deposited", `See TX on <a href="https://rinkeby.etherscan.io/tx/${receipt.transactionHash}" target="_blank">explorer</a><br>`);
 
-            window.blockNumber = receipt.blockNumber;
-            createWaitingProcess();
+            data.blockNumber = receipt.blockNumber;
+
+            let nextStep = getProviderRemoveNextStep(cacheDetail.step)
+            setProcessStep(NAV.PROVIDER, PROCESS.REMOVE, nextStep, data);
+            showProviderRemove(nextStep, data);
         })
         .on('error', function(error, _receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
             printErrorMessage(error.message);
@@ -250,24 +237,38 @@ let onCreateTargetDeposit = async function() {
         });
 }
 
-let onCreate = async function() {
+let onRemoveWithdraw = async function() {
+    window.errorModalEl.removeEventListener('hidden.bs.modal', onRemoveWithdraw);
+
+    // check that user is in the source chain.
+    if (isSource(chainId)) {
+        window.errorModalEl.addEventListener('hidden.bs.modal', onRemoveWithdraw);
+    
+        let errMessage = `You are on ${getSourceConf().name}' network. Please switch to '${getTargetConf().name}'`;
+    
+        return printErrorMessage(errMessage,  onRemoveWithdraw);
+    }
+
+    let cacheDetail = getProcessStep();
+    let data = cacheDetail.data;
+
     let params = [
-        [window.araResponse.source_token_address, window.araResponse.target_token_address],
-        [web3.utils.toWei(window.araResponse.sourceAmount), web3.utils.toWei(window.araResponse.targetAmount)],
-        window.araResponse.sig_v, window.araResponse.sig_r, window.araResponse.sig_s
+        data.araResponse.target_token_address,
+        web3.utils.toWei(data.araResponse.targetAmount.toString()),
+        data.araResponse.sig_v, data.araResponse.sig_r, data.araResponse.sig_s
     ]
 
-    window.xdex.methods.create(params)
+    window.xdex.methods.withdraw(params)
         .send({from: window.selectedAccount})
         .on('transactionHash', function(hash) {
-            window.hash = hash;
             showToast("Creating...", `See TX on <a href="https://rinkeby.etherscan.io/tx/${hash}" target="_blank">explorer</a>`);
         })
         .on('receipt', async function(receipt){
-            console.log(receipt);
             showToast("Created", `See TX on <a href="https://rinkeby.etherscan.io/tx/${receipt.transactionHash}" target="_blank">explorer</a><br>`);
 
-            createLpInitProcess();
+            clearProcessStep();
+            let nextStep = getProviderRemoveNextStep(STEP.WITHDRAW)
+            showProviderRemove(nextStep, data);
         })
         .on('error', function(error, _receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
             printErrorMessage(error.message);
@@ -275,33 +276,35 @@ let onCreate = async function() {
         });
 }
 
-let fetchCreateSig = async function() {
+let fetchRemoveSig = async function() {
     let targetId = parseInt(getSourceConf().pairedTo);
     let sourceId = parseInt(getTargetConf().pairedTo);
 
-    let tokenAmount = web3.utils.toWei(document.getElementById('provider-create-source-amount').value);
-    let tokenEl = document.getElementById('provider-create-source-list');
+    let cacheDetail = getProcessStep();
+    let data = cacheDetail.data;
 
-    let type = 'create-lp';
+    let type = 'remove-lp';
     let params = {
-        "txid": window.hash,
+        "txid": cacheDetail.data.hash,
         "sourceChainId": sourceId,
-        "sourceTokenAddress": tokenEl.value,
-        "sourceAmount": tokenAmount,
         "targetChainId": targetId
     }
 
     try {
-        window.araResponse = await fetchSig(type, params);
+        let araResponse = await fetchSig(type, params);
 
-        if (window.araResponse.status === 'ERROR') {
-            printErrorMessage(window.araResponse.message);
+        if (araResponse.status === 'ERROR') {
+            printErrorMessage(araResponse.message);
         } else {
-            if (window.selectedAccount !== window.araResponse.wallet_address) {
-                return printErrorMessage(`Signature returned for ${window.araResponse.wallet_address}`);
+            if (selectedAccount !== araResponse.wallet_address) {
+                return printErrorMessage(`Signature returned for ${araResponse.wallet_address}`);
             }
 
-            createFinalProcess();
+            data.araResponse = araResponse;
+
+            let nextStep = getProviderRemoveNextStep(STEP.SIG)
+            setProcessStep(NAV.PROVIDER, PROCESS.REMOVE, nextStep, cacheDetail.data);
+            showProviderRemove(nextStep, cacheDetail.data);
         }
     } catch (error) {
         printErrorMessage(error);
@@ -312,18 +315,20 @@ let fetchCreateSig = async function() {
  * listen for events
  */
 window.addEventListener('load', async () => {
-    // document.querySelector("#scape-transfer").addEventListener("click", onTransfer);
-    // document.querySelector("#fetch-scape-id").addEventListener("click", onFetch);
+    let content = document.getElementById('myTabContent');
 
-    let toastEl = document.querySelector("#toast");
-    window.toast = new bootstrap.Toast(toastEl);
+    // Create a new event, allow bubbling, and provide any data you want to pass to the "detail" property
+    content.addEventListener(`${NAV.PROVIDER}.${PROCESS.REMOVE}`, async (e) => {
+        showProviderRemove(e.detail.step, e.detail.data)
+    })
 
-    var tabElems = document.querySelectorAll('#myTab button[data-bs-toggle="tab"]')
-    for (var tabEl of tabElems) {
-      tabEl.addEventListener('shown.bs.tab', function (event) {
-        if (window.onMainTabSwitch) {
-          window.onMainTabSwitch(event);
-        }
-      })
-    }
+    let sourceToken = document.getElementById('provider-remove-source-list');
+    let targetToken = document.getElementById('provider-remove-target-list');
+
+    sourceToken.addEventListener('change', async() => {
+        showRemovePairAddress();
+    })
+    targetToken.addEventListener('change', async() => {
+        showRemovePairAddress();
+    });
 });

@@ -310,9 +310,9 @@ app.post('/add-lp', async (_req, res) => {
 app.post('/remove-lp', async (req, res) => {
 	let txid = req.body.txid;
 	let sourceChainId = parseInt(req.body.sourceChainId);
-	let targetChainId = parseInt(req.body.sourceChainId);
+	let targetChainId = parseInt(req.body.targetChainId);
 
-	if (!txid || !sourceAddress || !targetChainId) {
+	if (!txid || !sourceChainId || !targetChainId) {
 		return res.status(500).json({
 			status: 'ERROR',
 			message: 'Invalid parameter'
@@ -336,7 +336,7 @@ app.post('/remove-lp', async (req, res) => {
 	// initiate on target chain
 	let targetWeb3 = blockchain.initWeb3(targetChainId);
 	// initiate on source chain
-	let sourceWeb3 = blockchain.initWeb3(targetChainId);
+	let sourceWeb3 = blockchain.initWeb3(sourceChainId);
 
 	// check that txid exists
 	let receipt;
@@ -374,9 +374,9 @@ app.post('/remove-lp', async (req, res) => {
 	}
 
 	// now getting the parameters for signature
-	let event = receipt.logs[0];
-	let walletAddress = event.topics[1];
-	let targetAmount = event.topics[3];
+	let event = receipt.logs[4];
+	let walletAddress = sourceWeb3.eth.abi.decodeParameter("address",	event.topics[1]);
+	let targetAmount = sourceWeb3.eth.abi.decodeParameter("uint256",	event.topics[3]);
 
 	let pair = await blockchain.pairInstance(sourceWeb3, receipt.to);
 	let targetTokenAddress;
@@ -401,9 +401,9 @@ app.post('/remove-lp', async (req, res) => {
 		});
 	}
 
-    let arachyls = await ara.get(web3);
+    let arachyls = await ara.get(targetWeb3);
 
-	let sig = await ara.signWithdraw(nonce, walletAddress, targetAmount, targetTokenAddress, arachyls[0]);
+	let sig = await ara.signWithdraw(nonce, walletAddress, targetAmount, targetTokenAddress, arachyls[0], targetWeb3);
 
 	return res.json({
 		status: 'OK!',
@@ -415,7 +415,7 @@ app.post('/remove-lp', async (req, res) => {
 		target_chain_id: targetChainId,
 		source_chain_id: sourceChainId,
 		target_token_address: targetTokenAddress,
-		pair_address: pairAddress,
+		pair_address: receipt.to,
 		arachyl: arachyls[0].address
 	});
 });

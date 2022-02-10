@@ -28,6 +28,11 @@ let STEP    = {
  * @description Returns the first Process that user will see, if he wasn't on another process before.
  */
 let defaultProcessStep = function() {
+    return defaultProviderProcess();
+}
+
+
+let defaultProviderProcess = function() {
     return {
         nav:        NAV.PROVIDER,
         process:    PROCESS.CREATE,
@@ -36,6 +41,23 @@ let defaultProcessStep = function() {
     };
 }
 
+let defaultDeveloperProcess = function() {
+    return {
+        nav:        NAV.DEVELOPER,
+        process:    null,
+        step:       null,
+        data:       {}
+    };
+}
+
+let defaultUserProcess = function() {
+    return {
+        nav:        NAV.USER,
+        process:    PROCESS.SWAP_SOURCE,
+        step:       STEP.ACTION,
+        data:       {}
+    };
+}
 
 /**
  * In the process, get the next step
@@ -60,6 +82,28 @@ let getProviderCreateNextStep = function(step) {
     return null;
 }
 
+let getProvderNextStep = function(process, step) {
+    if (process === PROCESS.CREATE) {
+        return getProviderCreateNextStep(step);
+    } else if (process === PROCESS.REMOVE) {
+        return getProviderRemoveNextStep(step);
+    }
+}
+
+let getProviderRemoveNextStep = function(step) {
+    if (!step) {
+        return STEP.ACTION
+    } else if (step === STEP.ACTION) {
+        return STEP.BLOCK_WAITING
+    } else if (step === STEP.BLOCK_WAITING) {
+        return STEP.SIG
+    } else if (step === STEP.SIG) {
+        return STEP.WITHDRAW
+    } 
+
+    return null;
+}
+
 
 /**
  * @param {*} process   - could be swap,  create|add|remove
@@ -71,6 +115,13 @@ let setProcessStep = function(nav, process, step, data) {
     localStorage.setItem("process", process.toString());
     localStorage.setItem("step", step.toString());
     localStorage.setItem("data", JSON.stringify(data));
+}
+
+let clearProcessStep = function() {
+    localStorage.removeItem("nav");
+    localStorage.removeItem("process");
+    localStorage.removeItem("step");
+    localStorage.removeItem("data");
 }
 
 let getProcessStep = function() {
