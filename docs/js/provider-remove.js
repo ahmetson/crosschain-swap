@@ -100,8 +100,6 @@ let removeWithdrawProcess = async function() {
     btns['waitingBlocks'].style.display = "none";
     btns['waitingSig'].style.display = "none";
     disableBtn(btns['remove'], onRemove);
-
-    await fetchRemoveSig();
 }
 
 let removeWaitingProcess = function() {
