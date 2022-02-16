@@ -50,11 +50,10 @@ let signCreation = async (nonce, user, amounts, tokens, signer, web3) => {
     return sig;
 }
 
-let signMint = async (nonce, user, amounts, signer) => {
-    // depositNonceOf[msg.sender], params.amounts, msg.sender, params.tokens
-    let bytes32 = utils.defaultAbiCoder.encode(["uint256", "uint256", "uint256"], [nonce, amounts[0], amounts[1]]);
+let signMint = async (nonce, user, amounts, signer, web3) => {
+    let bytes32 = web3.eth.abi.encodeParameters(["uint256", "uint256", "uint256"], [nonce, amounts[0], amounts[1]]);
     let str = bytes32 + user.substr(2);
-    let data = utils.keccak256(str);
+    let data = web3.utils.keccak256(str);
     sig = await signer.sign(data);
     
     sig.v = parseInt(sig.v, 16);

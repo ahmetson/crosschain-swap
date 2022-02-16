@@ -169,21 +169,21 @@ app.post('/create-lp', async (req, res) => {
  * @param sourceTokenAddress a string of token address
  * @param sourceAmount a string representing amount in WEI format.
  */
-app.post('/add-lp', async (_req, res) => {
+app.post('/add-lp', async (req, res) => {
 	let txid = req.body.txid;
 	let sourceChainId = parseInt(req.body.sourceChainId);
-	let sourceAddress = req.body.sourceAddress;
+	let sourceTokenAddress = req.body.sourceTokenAddress;
 	let sourceAmount = req.body.sourceAmount;
-	let targetChainId = parseInt(req.body.sourceChainId);
+	let targetChainId = parseInt(req.body.targetChainId);
 
-	if (!txid || !sourceChainId || !sourceAddress || !sourceAmount || !targetChainId) {
+	if (!txid || !sourceChainId || !sourceTokenAddress || !sourceAmount || !targetChainId) {
 		return res.status(500).json({
 			status: 'ERROR',
 			message: 'Invalid parameter'
 		});
 	}
 
-	if (sourceChainId === targetChainId) {
+	if (sourceChainId == targetChainId) {
 		return res.status(500).json({
 			status: 'ERROR',
 			message: 'Same chain id'
@@ -235,13 +235,13 @@ app.post('/add-lp', async (_req, res) => {
 		});
 	}
 	// initiate on source chain
-	let sourceWeb3 = blockchain.initWeb3(targetChainId);
+	let sourceWeb3 = blockchain.initWeb3(sourceChainId);
 
 	// now getting the parameters for signature
-	let event = receipt.logs[0];
-	let walletAddress = event.topics[1];
-	let targetTokenAddress = event.topics[2];
-	let targetAmount = event.data;
+	let event = receipt.logs[1];
+	let walletAddress = sourceWeb3.eth.abi.decodeParameter("address",	event.topics[1]);
+	let targetTokenAddress = sourceWeb3.eth.abi.decodeParameter("address", event.topics[2]);
+	let targetAmount = sourceWeb3.eth.abi.decodeParameter("uint256", event.data);
 
 	// todo
 	// check that transaction is a valid deposit transaction
@@ -257,7 +257,7 @@ app.post('/add-lp', async (_req, res) => {
 	let factory = await blockchain.factoryInstance(sourceWeb3, sourceChainId);
 	let pairAddress;
 	try {
-		pairAddress = await factory.methods.getAddress([sourceTokenAddress, targetTokenAddress]).call();
+		pairAddress = await factory.methods.getPair(sourceTokenAddress, targetTokenAddress).call();
 	} catch (error) {
 		return res.status(500).json({
 			status: 'ERROR',
@@ -266,19 +266,20 @@ app.post('/add-lp', async (_req, res) => {
 	}
 
 	let pair = await blockchain.pairInstance(sourceWeb3, pairAddress);
-    let arachyls = await ara.get(web3);
+    let arachyls = await ara.get(sourceWeb3);
 
 	let nonce;
 	try {
 		nonce = await pair.methods.nonceOf(walletAddress).call()
 	} catch (error) {
+		console.log(error)
 		return res.status(500).json({
 			status: 'ERROR',
 			message: 'Failed to fetch the nonce from pair'
 		})
 	}
 
-	let sig = await ara.signMint(nonce, walletAddress, [sourceWeb.utils.toWei(sourceAmount), targetAmount], arachyls[0]);
+	let sig = await ara.signMint(nonce, walletAddress, [sourceAmount, targetAmount], arachyls[0], sourceWeb3);
 
 	return res.json({
 		status: 'OK!',
@@ -287,7 +288,7 @@ app.post('/add-lp', async (_req, res) => {
 		sig_s: sig.s,
 		wallet_address: walletAddress,
 		targetAmount: sourceWeb3.utils.fromWei(targetAmount),
-		sourceAmount: sourceAmount,
+		sourceAmount: sourceWeb3.utils.fromWei(sourceAmount),
 		target_chain_id: targetChainId,
 		source_chain_id: sourceChainId,
 		target_token_address: targetTokenAddress,
