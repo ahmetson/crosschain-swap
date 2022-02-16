@@ -280,16 +280,16 @@
                 <!-- First token -->
                 <div class="row mt-5">
                   <div class="col-md-3">
-                    <label for="exampleFormControlInput1" class="form-label">Blockchain:</label>
-                    <input type="text" class="form-control" id="exampleFormControlInput1" value="ETH" disabled="true">
+                    <label for="provider-add-source-name" class="form-label">Blockchain:</label>
+                    <input type="text" class="form-control" id="provider-add-source-name" value="ETH" disabled="true">
                   </div>
                   <div class="col-md-6">
-                    <label for="exampleFormControlInput1" class="form-label">Amount:</label>
-                    <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="100.0">
+                    <label for="provider-add-source-amount" class="form-label">Amount:</label>
+                    <input type="text" class="form-control" id="provider-add-source-amount" placeholder="100.0">
                   </div>
                   <div class="col-md-3">
-                    <label for="exampleFormControlInput1" class="form-label">Token:</label>
-                    <select class="form-select" aria-label="Select the token">
+                    <label for="provider-add-source-list" class="form-label">Token:</label>
+                    <select class="form-select" aria-label="Select the token" id="provider-add-source-list">
                       <option selected value="1">Test token 1</option>
                       <option value="2">Test token 2</option>
                       <option value="3">CWS</option>
@@ -302,16 +302,16 @@
                 <!-- Second token -->
                 <div class="row">
                   <div class="col-md-3">
-                    <label for="exampleFormControlInput1" class="form-label">Blockchain:</label>
-                    <input type="text" class="form-control" id="exampleFormControlInput1" value="BSC" disabled="true">
+                    <label for="provider-add-target-name" class="form-label">Blockchain:</label>
+                    <input type="text" class="form-control" id="provider-add-target-name" value="BSC" disabled="true">
                   </div>
                   <div class="col-md-6">
-                    <label for="exampleFormControlInput1" class="form-label">Amount:</label>
-                    <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="100.0">
+                    <label for="provider-add-target-amount" class="form-label">Amount:</label>
+                    <input type="text" class="form-control" id="provider-add-target-amount" placeholder="100.0">
                   </div>
                   <div class="col-md-3">
-                    <label for="exampleFormControlInput1" class="form-label">Token:</label>
-                    <select class="form-select" aria-label="Select the token">
+                    <label for="provider-add-target-list" class="form-label">Token:</label>
+                    <select class="form-select" aria-label="Select the token" id="provider-add-target-list">
                       <option selected value="1">Test token 3</option>
                       <option value="2">Test token 4</option>
                       <option value="3">bCWS</option>
@@ -340,24 +340,24 @@
                 <!-- Actions -->
                 <div class="row mt-5">
                   <div class="col-md-12 text-center">
-                    <button class="btn btn-warning text-center" id="btn-disconnect">
+                    <button class="btn btn-warning text-center" id="btn-add-approve-source">
                       Approve on Ethereum
                     </button>
-                    <button class="btn btn-primary" id="btn-connect">
+                    <button class="btn btn-primary" id="btn-add-deposit-target">
                       Deposit on BSC
                     </button>
-                    <button class="btn btn-warning text-center" id="btn-disconnect">
+                    <button class="btn btn-warning text-center" id="btn-add-approve-target">
                       Approve on BSC
                     </button>
-                    <button class="btn btn-primary" type="button" disabled>
+                    <button class="btn btn-primary" type="button" disabled id="btn-add-waiting">
                       <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                      Waiting for <span>1</span>/12 blocks
+                      Waiting for <span id="provider-add-left-blocks">1</span>/12 blocks
                     </button>
-                    <button class="btn btn-primary" type="button" disabled>
+                    <button class="btn btn-primary" type="button" disabled id="btn-add-sig">
                       <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                       Waiting for signature...
                     </button>
-                    <button class="btn btn-primary" id="btn-connect">
+                    <button class="btn btn-primary" id="btn-add">
                       Add
                     </button>
                   </div>
@@ -525,6 +525,7 @@
     <script type="text/javascript" src="js/cache.js"></script>
     <script type="text/javascript" src="js/blockchain-config.js"></script>
     <script type="text/javascript" src="js/provider-create.js"></script>
+    <script type="text/javascript" src="js/provider-add.js"></script>
     <script type="text/javascript" src="js/provider-remove.js"></script>
     <script type="text/javascript" src="js/ui.js"></script>
     <script type="module" src="js/wallet-connect.js"></script>

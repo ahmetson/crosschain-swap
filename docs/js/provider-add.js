@@ -2,7 +2,7 @@
 
 /**
  * nav: Provider 
- * process: Creation
+ * process: Addition
  * 
  * Listen events of process step update.
  */
@@ -16,16 +16,16 @@
  * @param {cache-js.STEP} step 
  * @param {} data 
  */
-let showProviderCreate = function(step, data) {
+let showProviderAdd = function(step, data) {
     // 
     //  Source
     //
     let sourceConf = getSourceConf();
     
-    let sourceChainName = document.getElementById("provider-create-source-name");
+    let sourceChainName = document.getElementById("provider-add-source-name");
     sourceChainName.setAttribute("value", sourceConf.name);
 
-    let sourceList = document.getElementById("provider-create-source-list")
+    let sourceList = document.getElementById("provider-add-source-list")
     sourceList.textContent = "";
 
     for (var token of sourceConf.tokens) {
@@ -38,10 +38,10 @@ let showProviderCreate = function(step, data) {
 
     let targetConf = getTargetConf();
 
-    let targetChainName = document.getElementById("provider-create-target-name");
+    let targetChainName = document.getElementById("provider-add-target-name");
     targetChainName.setAttribute("value", targetConf.name);
 
-    let targetList = document.getElementById("provider-create-target-list")
+    let targetList = document.getElementById("provider-add-target-list")
     targetList.textContent = "";
 
     for (var token of targetConf.tokens) {
@@ -54,58 +54,52 @@ let showProviderCreate = function(step, data) {
 
     // show first step button on process
     if (step === null || step === STEP.APPROVE_TARGET) {
-        createInitProcess();
+        addInitProcess();
     } else if (step === STEP.DEPOSIT) {
-        createDepositProcess(data);
+        addDepositProcess(data);
     } else if (step === STEP.BLOCK_WAITING) {
-        createWaitingProcess(data);
+        addWaitingProcess(data);
     } else if (step === STEP.APPROVE_SOURCE) {
-        createApproveSourceProcess();
+        addApproveSourceProcess();
     } else if (step === STEP.SIG) {
-        createWaitingSigProcess(data);
+        addWaitingSigProcess(data);
     } else if (step === STEP.ACTION) {
-        createFinalProcess(data);
+        addFinalProcess(data);
     }
 };
 
-let createInitProcess = function() {
-    let btns = getCreateBtns();
+let addInitProcess = function() {
+    let btns = getAddBtns();
     
-    // show
-    enableBtn(btns['approveTarget'], onCreateTargetApprove);
-
-    // the rest are hided
-    disableBtn(btns['depositTarget'], onCreateTargetDeposit);
+    enableBtn(btns['approveTarget'], onAddTargetApprove);
+    disableBtn(btns['depositTarget'], onAddTargetDeposit);
     btns['waiting'].style.display = "none";
     btns['waitingBlocks'].style.display = "none";
     btns['waitingSig'].style.display = "none";
     btns['approveSource'].style.display = "none";
-    btns['create'].style.display = "none";
+    btns['add'].style.display = "none";
 }
 
-let createDepositProcess = function() {
-    let btns = getCreateBtns();
+let addDepositProcess = function() {
+    let btns = getAddBtns();
     
-    // show
-    disableBtn(btns['approveTarget'], onCreateTargetApprove);
-
-    // the rest are hided
-    enableBtn(btns['depositTarget'], onCreateTargetDeposit);
+    disableBtn(btns['approveTarget'], onAddTargetApprove);
+    enableBtn(btns['depositTarget'], onAddTargetDeposit);
     btns['waiting'].style.display = "none";
     btns['waitingBlocks'].style.display = "none";
     btns['waitingSig'].style.display = "none";
     btns['approveSource'].style.display = "none";
-    btns['create'].style.display = "none";
+    btns['add'].style.display = "none";
 }
 
-let createWaitingProcess = function() {
-    let btns = getCreateBtns();
+let addWaitingProcess = function() {
+    let btns = getAddBtns();
     
     let cacheDetail = getProcessStep();
     let data = cacheDetail.data;
 
-    disableBtn(btns['approveTarget'], onCreateTargetApprove);
-    disableBtn(btns['depositTarget'], onCreateTargetDeposit);
+    disableBtn(btns['approveTarget'], onAddTargetApprove);
+    disableBtn(btns['depositTarget'], onAddTargetDeposit);
     btns['waiting'].style.display = "";
     btns['waitingBlocks'].style.display = "";
 
@@ -119,9 +113,9 @@ let createWaitingProcess = function() {
         if (currentBlockNumber - data.blockNumber > 12) {
             clearInterval(interval);
 
-            let nextStep = getProviderCreateNextStep(STEP.BLOCK_WAITING)
-            setProcessStep(NAV.PROVIDER, PROCESS.CREATE, nextStep, data);
-            showProviderCreate(nextStep, data);
+            let nextStep = getProviderAddNextStep(STEP.BLOCK_WAITING)
+            setProcessStep(NAV.PROVIDER, PROCESS.ADD, nextStep, data);
+            showProviderAdd(nextStep, data);
         } else {
             let left = currentBlockNumber - data.blockNumber;
             btns['waitingBlocks'].innerText = left;
@@ -129,83 +123,83 @@ let createWaitingProcess = function() {
     }, 1000);
     btns['waitingSig'].style.display = "none";
     btns['approveSource'].style.display = "none";
-    btns['create'].style.display = "none";
+    btns['add'].style.display = "none";
 }
 
-let createApproveSourceProcess = function() {
-    let btns = getCreateBtns();
+let addApproveSourceProcess = function() {
+    let btns = getAddBtns();
     
-    disableBtn(btns['approveTarget'], onCreateTargetApprove);
-    disableBtn(btns['depositTarget'], onCreateTargetDeposit);
+    disableBtn(btns['approveTarget'], onAddTargetApprove);
+    disableBtn(btns['depositTarget'], onAddTargetDeposit);
     btns['waiting'].style.display = "none";
     btns['waitingSig'].style.display = "none";
-    enableBtn(btns['approveSource'], onCreateSourceApprove);
-    btns['create'].style.display = "none";
+    enableBtn(btns['approveSource'], onAddSourceApprove);
+    btns['add'].style.display = "none";
 }
 
-let createWaitingSigProcess = async function() {
-    let btns = getCreateBtns();
+let addWaitingSigProcess = async function() {
+    let btns = getAddBtns();
     
-    disableBtn(btns['approveTarget'], onCreateTargetApprove);
-    disableBtn(btns['depositTarget'], onCreateTargetDeposit);
+    disableBtn(btns['approveTarget'], onAddTargetApprove);
+    disableBtn(btns['depositTarget'], onAddTargetDeposit);
     btns['waiting'].style.display = "none";
     btns['waitingSig'].style.display = "";
-    disableBtn(btns['approveSource'], onCreateSourceApprove);
-    btns['create'].style.display = "none";
+    disableBtn(btns['approveSource'], onAddSourceApprove);
+    btns['add'].style.display = "none";
 
-    await fetchCreateSig();
+    await fetchAddSig();
 }
 
-let createFinalProcess = function() {
-    let btns = getCreateBtns();
+let addFinalProcess = function() {
+    let btns = getAddBtns();
     
     // show
-    disableBtn(btns['approveTarget'], onCreateTargetApprove);
+    disableBtn(btns['approveTarget'], onAddTargetApprove);
 
     // the rest are hided
-    disableBtn(btns['depositTarget'], onCreateTargetDeposit);
+    disableBtn(btns['depositTarget'], onAddTargetDeposit);
     btns['waiting'].style.display = "none";
     btns['waitingBlocks'].style.display = "none";
     btns['waitingSig'].style.display = "none";
-    disableBtn(btns['approveSource'], onCreateSourceApprove);
-    enableBtn(btns['create'], onCreate);
+    disableBtn(btns['approveSource'], onAddSourceApprove);
+    enableBtn(btns['add'], onAdd);
 }
 
-let getCreateBtns = function() {
+let getAddBtns = function() {
     return {
-        approveTarget: document.getElementById("btn-create-approve-target"),
-        depositTarget: document.getElementById("btn-create-deposit-target"),
-        waiting: document.getElementById("btn-create-waiting"),
-        waitingBlocks: document.getElementById("provider-create-left-blocks"),
-        waitingSig: document.getElementById("btn-create-sig"),
-        approveSource: document.getElementById("btn-create-approve-source"),
-        create: document.getElementById("btn-create")
+        approveTarget: document.getElementById("btn-add-approve-target"),
+        depositTarget: document.getElementById("btn-add-deposit-target"),
+        waiting: document.getElementById("btn-add-waiting"),
+        waitingBlocks: document.getElementById("provider-add-left-blocks"),
+        waitingSig: document.getElementById("btn-add-sig"),
+        approveSource: document.getElementById("btn-add-approve-source"),
+        add: document.getElementById("btn-add")
     }
 }
 
-let onCreateTargetApprove = async function() {
-    window.errorModalEl.removeEventListener('hidden.bs.modal', onCreateTargetApprove);
+let onAddTargetApprove = async function() {
+    window.errorModalEl.removeEventListener('hidden.bs.modal', onAddTargetApprove);
 
-    let nextStep = getProviderCreateNextStep(STEP.APPROVE_TARGET)
+    let nextStep = getProviderAddNextStep(STEP.APPROVE_TARGET)
 
     // check that user is in the source chain.
     if (isSource(chainId)) {
-        window.errorModalEl.addEventListener('hidden.bs.modal', onCreateTargetApprove);
+        window.errorModalEl.addEventListener('hidden.bs.modal', onAddTargetApprove);
 
         let errMessage = `You are on ${getSourceConf().name}' network. Please switch to '${getTargetConf().name}'`;
 
-        return printErrorMessage(errMessage,  onCreateTargetApprove);
+        return printErrorMessage(errMessage,  onAddTargetApprove);
     }
 
-    let targetTokenAmount = parseFloat(document.getElementById('provider-create-target-amount').value);
+    let targetTokenAmount = parseFloat(document.getElementById('provider-add-target-amount').value);
     if (isNaN(targetTokenAmount)) {
         return printErrorMessage(`Invalid Target Amount`);
     }
     let targetTokenAmountWei = web3.utils.toWei(targetTokenAmount.toString());
 
-    let sourceTokenEl = document.getElementById('provider-create-source-list');
-    let sourceTokenAmount = parseFloat(document.getElementById('provider-create-source-amount').value);
-    let targetTokenEl = document.getElementById('provider-create-target-list');
+    let sourceTokenEl = document.getElementById('provider-add-source-list');
+    let sourceTokenAmount = parseFloat(document.getElementById('provider-add-source-amount').value);
+    let targetTokenEl = document.getElementById('provider-add-target-list');
     
     window.tokens[targetTokenEl.value].methods.approve(window.xdex._address, targetTokenAmountWei)
         .send({from: window.selectedAccount})
@@ -224,8 +218,8 @@ let onCreateTargetApprove = async function() {
                 targetAmount: targetTokenAmount,
                 selectedAccount: window.selectedAccount
             }
-            setProcessStep(NAV.PROVIDER, PROCESS.CREATE, nextStep, data);
-            showProviderCreate(nextStep, data);
+            setProcessStep(NAV.PROVIDER, PROCESS.ADD, nextStep, data);
+            showProviderAdd(nextStep, data);
         })
         .on('error', function(error, _receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
             printErrorMessage(error.message);
@@ -233,19 +227,19 @@ let onCreateTargetApprove = async function() {
     });
 }
 
-let onCreateSourceApprove = async function() {
-    window.errorModalEl.removeEventListener('hidden.bs.modal', onCreateSourceApprove);
+let onAddSourceApprove = async function() {
+    window.errorModalEl.removeEventListener('hidden.bs.modal', onAddSourceApprove);
 
     let cacheDetail = getProcessStep();
     let data = cacheDetail.data;
 
     // check that user is in the source chain.
     if (!isSource(chainId)) {
-        window.errorModalEl.addEventListener('hidden.bs.modal', onCreateSourceApprove);
+        window.errorModalEl.addEventListener('hidden.bs.modal', onAddSourceApprove);
 
         let errMessage = `You are on ${getTargetConf().name}' network. Please switch to '${getSourceConf().name}'`;
 
-        return printErrorMessage(errMessage,  onCreateSourceApprove);
+        return printErrorMessage(errMessage,  onAddSourceApprove);
     }
 
     let tokenAmountWei = web3.utils.toWei(data.sourceAmount.toString());
@@ -258,9 +252,9 @@ let onCreateSourceApprove = async function() {
         .on('receipt', async function(receipt){
             showToast("Approved", `See TX on <a href="https://rinkeby.etherscan.io/tx/${receipt.transactionHash}" target="_blank">explorer</a><br>`);
 
-            let nextStep = getProviderCreateNextStep(STEP.APPROVE_SOURCE)
-            setProcessStep(NAV.PROVIDER, PROCESS.CREATE, nextStep, data);
-            showProviderCreate(nextStep, data);
+            let nextStep = getProviderAddNextStep(STEP.APPROVE_SOURCE)
+            setProcessStep(NAV.PROVIDER, PROCESS.ADD, nextStep, data);
+            showProviderAdd(nextStep, data);
         })
         .on('error', function(error, _receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
             printErrorMessage(error.message);
@@ -268,7 +262,7 @@ let onCreateSourceApprove = async function() {
     });
 }
 
-let onCreateTargetDeposit = async function() {
+let onAddTargetDeposit = async function() {
     let cacheDetail = getProcessStep();
     let data = cacheDetail.data;
     let targetTokenAmountWei = web3.utils.toWei(data.targetAmount.toString());
@@ -285,9 +279,9 @@ let onCreateTargetDeposit = async function() {
 
             data.blockNumber = receipt.blockNumber;
 
-            let nextStep = getProviderCreateNextStep(STEP.DEPOSIT)
-            setProcessStep(NAV.PROVIDER, PROCESS.CREATE, nextStep, data);
-            showProviderCreate(nextStep, data);
+            let nextStep = getProviderAddNextStep(STEP.DEPOSIT)
+            setProcessStep(NAV.PROVIDER, PROCESS.ADD, nextStep, data);
+            showProviderAdd(nextStep, data);
         })
         .on('error', function(error, _receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
             printErrorMessage(error.message);
@@ -295,27 +289,50 @@ let onCreateTargetDeposit = async function() {
         });
 }
 
-let onCreate = async function() {
+let onAdd = async function() {
+    window.errorModalEl.removeEventListener('hidden.bs.modal', onAdd);
+
+    // check that user is in the source chain.
+    if (!isSource(chainId)) {
+        window.errorModalEl.addEventListener('hidden.bs.modal', onAdd);
+
+        let errMessage = `You are on ${getTargetConf().name}' network. Please switch to '${getSourceConf().name}'`;
+
+        return printErrorMessage(errMessage,  onAdd);
+    }
+
     let cacheDetail = getProcessStep();
     let data = cacheDetail.data;
 
+    let pairAddress = await xdex.methods.getPair(data.araResponse.source_token_address, data.araResponse.target_token_address).call();
+    let empty = '0x0000000000000000000000000000000000000000';
+
+    if (pairAddress === empty) {
+        let errMessage = `The pair of ${sourceToken.value}-${targetToken.value} doesn't exist. please create it.`;
+
+        return printErrorMessage(errMessage);
+    }
+
+    // now load the pair contract.
+    loadPair(pairAddress);
+
     let params = [
-        [data.araResponse.source_token_address, data.araResponse.target_token_address],
-        [web3.utils.toWei(data.araResponse.sourceAmount), web3.utils.toWei(data.araResponse.targetAmount)],
+        web3.utils.toWei(data.araResponse.sourceAmount.toString()), 
+        web3.utils.toWei(data.araResponse.targetAmount.toString()),
         data.araResponse.sig_v, data.araResponse.sig_r, data.araResponse.sig_s
     ]
 
-    window.xdex.methods.create(params)
+    window.pair.methods.mint(params)
         .send({from: window.selectedAccount})
         .on('transactionHash', function(hash) {
-            showToast("Creating...", `See TX on <a href="https://rinkeby.etherscan.io/tx/${hash}" target="_blank">explorer</a>`);
+            showToast("Adding...", `See TX on <a href="https://rinkeby.etherscan.io/tx/${hash}" target="_blank">explorer</a>`);
         })
         .on('receipt', async function(receipt){
-            showToast("Created", `See TX on <a href="https://rinkeby.etherscan.io/tx/${receipt.transactionHash}" target="_blank">explorer</a><br>`);
+            showToast("Added", `See TX on <a href="https://rinkeby.etherscan.io/tx/${receipt.transactionHash}" target="_blank">explorer</a><br>`);
 
             clearProcessStep();
-            let nextStep = getProviderCreateNextStep(STEP.ACTION)
-            showProviderCreate(nextStep, data);
+            let nextStep = getProviderAddNextStep(STEP.ACTION)
+            showProviderAdd(nextStep, data);
         })
         .on('error', function(error, _receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
             printErrorMessage(error.message);
@@ -323,14 +340,14 @@ let onCreate = async function() {
         });
 }
 
-let fetchCreateSig = async function() {
+let fetchAddSig = async function() {
     let targetId = parseInt(getSourceConf().pairedTo);
     let sourceId = parseInt(getTargetConf().pairedTo);
 
     let cacheDetail = getProcessStep();
     let data = cacheDetail.data;
 
-    let type = 'create-lp';
+    let type = 'add-lp';
     let params = {
         "txid": cacheDetail.data.hash,
         "sourceChainId": sourceId,
@@ -351,9 +368,9 @@ let fetchCreateSig = async function() {
 
             data.araResponse = araResponse;
 
-            let nextStep = getProviderCreateNextStep(STEP.SIG)
-            setProcessStep(NAV.PROVIDER, PROCESS.CREATE, nextStep, cacheDetail.data);
-            showProviderCreate(nextStep, cacheDetail.data);
+            let nextStep = getProviderAddNextStep(STEP.SIG)
+            setProcessStep(NAV.PROVIDER, PROCESS.ADD, nextStep, cacheDetail.data);
+            showProviderAdd(nextStep, cacheDetail.data);
         }
     } catch (error) {
         printErrorMessage(error);
@@ -366,8 +383,7 @@ let fetchCreateSig = async function() {
 window.addEventListener('load', async () => {
     let content = document.getElementById('myTabContent');
 
-    // Create a new event, allow bubbling, and provide any data you want to pass to the "detail" property
-    content.addEventListener(`${NAV.PROVIDER}.${PROCESS.CREATE}`, async (e) => {
-        showProviderCreate(e.detail.step, e.detail.data)
+    content.addEventListener(`${NAV.PROVIDER}.${PROCESS.ADD}`, async (e) => {
+        showProviderAdd(e.detail.step, e.detail.data)
     })
 });

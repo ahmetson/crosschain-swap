@@ -104,7 +104,7 @@ window.onProviderSwitch = async function(event) {
     let defaultProcess = defaultProviderProcess();
 
     defaultProcess.process = tabId;
-    defaultProcess.step = getProvderNextStep(tabId, null);
+    defaultProcess.step = getProviderNextStep(tabId, null);
 
     let content = document.getElementById('myTabContent');
 

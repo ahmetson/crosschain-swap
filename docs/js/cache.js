@@ -82,11 +82,31 @@ let getProviderCreateNextStep = function(step) {
     return null;
 }
 
-let getProvderNextStep = function(process, step) {
+let getProviderAddNextStep = function(step) {
+    if (!step) {
+        return STEP.APPROVE_TARGET
+    } else if (step === STEP.APPROVE_TARGET) {
+        return STEP.DEPOSIT
+    } else if (step === STEP.DEPOSIT) {
+        return STEP.BLOCK_WAITING
+    } else if (step === STEP.BLOCK_WAITING) {
+        return STEP.APPROVE_SOURCE
+    } else if (step === STEP.APPROVE_SOURCE) {
+        return STEP.SIG
+    } else if (step === STEP.SIG) {
+        return STEP.ACTION
+    } 
+
+    return null;
+}
+
+let getProviderNextStep = function(process, step) {
     if (process === PROCESS.CREATE) {
         return getProviderCreateNextStep(step);
     } else if (process === PROCESS.REMOVE) {
         return getProviderRemoveNextStep(step);
+    } else if (process === PROCESS.ADD) {
+        return getProviderAddNextStep(step);
     }
 }
 

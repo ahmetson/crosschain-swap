@@ -208,7 +208,7 @@ let onRemove = async function() {
 
     let cacheDetail = defaultProviderProcess();
     cacheDetail.process = PROCESS.REMOVE;
-    cacheDetail.step = getProvderNextStep(cacheDetail.process);
+    cacheDetail.step = getProviderNextStep(cacheDetail.process);
     let data = cacheDetail.data;
 
     let amountWei = web3.utils.toWei(amount.toString());
