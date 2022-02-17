@@ -244,7 +244,19 @@ let onAddSourceApprove = async function() {
 
     let tokenAmountWei = web3.utils.toWei(data.sourceAmount.toString());
     
-    window.tokens[data.sourceToken].methods.approve(window.xdex._address, tokenAmountWei)
+    let pairAddress = await xdex.methods.getPair(data.araResponse.source_token_address, data.araResponse.target_token_address).call();
+    let empty = '0x0000000000000000000000000000000000000000';
+
+    if (pairAddress === empty) {
+        let errMessage = `The pair of ${sourceToken.value}-${targetToken.value} doesn't exist. please create it.`;
+
+        return printErrorMessage(errMessage);
+    }
+
+    // now load the pair contract.
+    loadPair(pairAddress);
+
+    window.tokens[data.sourceToken].methods.approve(window.pair._address, tokenAmountWei)
         .send({from: window.selectedAccount})
         .on('transactionHash', function(hash) {
             showToast("Approving...", `See TX on <a href="https://rinkeby.etherscan.io/tx/${hash}" target="_blank">explorer</a>`);
