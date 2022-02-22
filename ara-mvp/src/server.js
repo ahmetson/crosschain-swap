@@ -434,9 +434,9 @@ app.post('/remove-lp', async (req, res) => {
 app.post('/swap/to-target', async (req, res) => {
 	let txid = req.body.txid;
 	let sourceChainId = parseInt(req.body.sourceChainId);
-	let targetChainId = parseInt(req.body.sourceChainId);
+	let targetChainId = parseInt(req.body.targetChainId);
 
-	if (!txid || !sourceAddress || !targetChainId) {
+	if (!txid || !sourceChainId || !targetChainId) {
 		return res.status(500).json({
 			status: 'ERROR',
 			message: 'Invalid parameter'
@@ -460,7 +460,7 @@ app.post('/swap/to-target', async (req, res) => {
 	// initiate on target chain
 	let targetWeb3 = blockchain.initWeb3(targetChainId);
 	// initiate on source chain
-	let sourceWeb3 = blockchain.initWeb3(targetChainId);
+	let sourceWeb3 = blockchain.initWeb3(sourceChainId);
 
 	// check that txid exists
 	let receipt;
@@ -498,9 +498,9 @@ app.post('/swap/to-target', async (req, res) => {
 	}
 
 	// now getting the parameters for signature
-	let event = receipt.logs[0];
+	let event = receipt.logs[2];
 	let walletAddress = receipt.from;
-	let params = sourceWeb3.eth.abi.decodeParameters(['uint256[4'], event.data);
+	let params = sourceWeb3.eth.abi.decodeParameters(['uint256[4]'], event.data)[0];
 	let targetAmount = params[3];
 
 	let pair = await blockchain.pairInstance(sourceWeb3, receipt.to);
@@ -526,9 +526,9 @@ app.post('/swap/to-target', async (req, res) => {
 		});
 	}
 
-    let arachyls = await ara.get(web3);
+    let arachyls = await ara.get(targetWeb3);
 
-	let sig = await ara.signWithdraw(nonce, walletAddress, targetAmount, targetTokenAddress, arachyls[0]);
+	let sig = await ara.signWithdraw(nonce, walletAddress, targetAmount, targetTokenAddress, arachyls[0], targetWeb3);
 
 	return res.json({
 		status: 'OK!',
@@ -540,7 +540,7 @@ app.post('/swap/to-target', async (req, res) => {
 		target_chain_id: targetChainId,
 		source_chain_id: sourceChainId,
 		target_token_address: targetTokenAddress,
-		pair_address: pairAddress,
+		pair_address: receipt.to,
 		arachyl: arachyls[0].address
 	});
 });

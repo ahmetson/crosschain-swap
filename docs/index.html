@@ -65,7 +65,10 @@
             <div class="col-md-12">
               <ul class="nav nav-pills" id="user-tab" role="tablist">
                 <li class="nav-item" role="presentation">
-                  <button class="nav-link active" id="user-swap-tab" data-bs-toggle="tab" data-bs-target="#user-swap" type="button" role="tab" aria-controls="user-swap" aria-selected="true">Swap</button>
+                  <button class="nav-link active" id="user-swap-to-source-tab" data-bs-toggle="tab" data-bs-target="#user-swap-to-source" type="button" role="tab" aria-controls="user-swap-to-source" aria-selected="true">Swap To Source</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="user-swap-to-target-tab" data-bs-toggle="tab" data-bs-target="#user-swap-to-target" type="button" role="tab" aria-controls="user-swap-to-target" aria-selected="true">Swap To Target</button>
                 </li>
               </ul>
             </div>
@@ -74,25 +77,22 @@
           <!-- User tabs -->
           <!---------------------------------->
           <div class="tab-content" id="user-tab-content">
-            <!-- User tabs: swap -->
-            <div class="tab-pane show active" id="user-swap" role="tabpanel" aria-labelledby="user-swap-tab">
+            <!-- User tabs: swap to source -->
+            <div class="tab-pane show active" id="user-swap-to-source" role="tabpanel" aria-labelledby="user-swap-to-source-tab">
               <div class="container">
                 <!-- First token -->
                 <div class="row mt-5">
                   <div class="col-md-3">
-                    <label for="exampleFormControlInput1" class="form-label">Blockchain:</label>
-                    <select class="form-select" aria-label="Select the blockchain">
-                      <option selected value="from-ethereum">Ethereum</option>
-                      <option value="from-bsc">Bsc</option>
-                    </select>
+                    <label for="user-swap-to-source-source-name" class="form-label">Blockchain:</label>
+                    <input type="text" class="form-control" id="user-swap-to-source-source-name" value="ETH" disabled="true">
                   </div>
                   <div class="col-md-6">
-                    <label for="exampleFormControlInput1" class="form-label">Amount:</label>
-                    <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="100.0">
+                    <label for="user-swap-to-source-source-amount" class="form-label">Amount:</label>
+                    <input type="text" class="form-control" id="user-swap-to-source-source-amount" placeholder="100.0">
                   </div>
                   <div class="col-md-3">
-                    <label for="exampleFormControlInput1" class="form-label">Token:</label>
-                    <select class="form-select" aria-label="Select the token">
+                    <label for="user-swap-to-source-source-list" class="form-label">Token:</label>
+                    <select class="form-select" aria-label="Select the token" id="user-swap-to-source-source-list">
                       <option selected value="1">Test token 1</option>
                       <option value="2">Test token 2</option>
                       <option value="3">CWS</option>
@@ -102,26 +102,23 @@
                 <div class="row mt-3">
                   <div class="col-md-12 list-group-item list-group-item-light d-flex justify-content-between align-items-center" >
                     Balance
-                    <span class="badge bg-primary rounded-pill" id="from-balance">0</span>
+                    <span class="badge bg-primary rounded-pill" id="user-swap-to-source-balance">0</span>
                   </div>
                   <div class="col-md-12 text-center">to</div>
                 </div>
                 <!-- Second token -->
                 <div class="row">
                   <div class="col-md-3">
-                    <label for="exampleFormControlInput1" class="form-label">Blockchain:</label>
-                    <select class="form-select" aria-label="Select the blockchain">
-                      <option value="to-ethereum">Ethereum</option>
-                      <option selected value="to-bsc">Bsc</option>
-                    </select>
+                    <label for="user-swap-to-source-target-name" class="form-label">Blockchain:</label>
+                    <input type="text" class="form-control" id="user-swap-to-source-target-name" value="ETH" disabled="true">
                   </div>
                   <div class="col-md-6">
-                    <label for="exampleFormControlInput1" class="form-label">Amount:</label>
-                    <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="100.0" disabled>
+                    <label for="user-swap-to-source-target-amount" class="form-label">Amount:</label>
+                    <input type="text" class="form-control" id="user-swap-to-source-target-amount" placeholder="100.0" >
                   </div>
                   <div class="col-md-3">
-                    <label for="exampleFormControlInput1" class="form-label">Token:</label>
-                    <select class="form-select" aria-label="Select the token">
+                    <label for="user-swap-to-source-target-list" class="form-label">Token:</label>
+                    <select class="form-select" aria-label="Select the token" id="user-swap-to-source-target-list">
                       <option selected value="1">Test token 3</option>
                       <option value="2">Test token 4</option>
                       <option value="3">bCWS</option>
@@ -131,27 +128,93 @@
                 <!-- Actions -->
                 <div class="row mt-5">
                   <div class="col-md-12 text-center">
-                    <button class="btn btn-warning text-center" id="btn-disconnect">
-                      Approve on Ethereum
-                    </button>
-                    <button class="btn btn-warning text-center" id="btn-disconnect">
+                    <button class="btn btn-warning text-center" id="btn-user-swap-to-source-approve-target">
                       Approve on BSC
                     </button>
-                    <button class="btn btn-primary" id="btn-connect">
+                    <button class="btn btn-primary" id="btn-user-swap-to-target-deposit">
                       Deposit on BSC
                     </button>
-                    <button class="btn btn-primary" id="btn-connect">
-                      Withdraw on BSC
-                    </button>
-                    <button class="btn btn-primary" type="button" disabled>
+                    <button class="btn btn-primary" type="button" disabled id="btn-user-swap-to-source-waiting">
                       <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                      Waiting for <span>1</span>/12 blocks
+                      Waiting for <span id="btn-user-swap-to-source-block">1</span>/12 blocks
                     </button>
-                    <button class="btn btn-primary" type="button" disabled>
+                    <button class="btn btn-primary" type="button" disabled id="btn-user-swap-to-source-sig">
                       <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                       Waiting for signature...
                     </button>
-                    <button class="btn btn-primary" id="btn-connect">
+                    <button class="btn btn-primary" id="btn-user-swap-to-source-action">
+                      Swap
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- User tabs: swap to target -->
+            <div class="tab-pane" id="user-swap-to-target" role="tabpanel" aria-labelledby="user-swap-to-target-tab">
+              <div class="container">
+                <!-- First token -->
+                <div class="row mt-5">
+                  <div class="col-md-3">
+                    <label for="user-swap-to-target-source-name" class="form-label">Blockchain:</label>
+                    <input type="text" class="form-control" id="user-swap-to-target-source-name" value="ETH" disabled="true">
+                  </div>
+                  <div class="col-md-6">
+                    <label for="user-swap-to-target-source-amount" class="form-label">Amount:</label>
+                    <input type="text" class="form-control" id="user-swap-to-target-source-amount" placeholder="100.0">
+                  </div>
+                  <div class="col-md-3">
+                    <label for="user-swap-to-target-source-list" class="form-label">Token:</label>
+                    <select class="form-select" aria-label="Select the token" id="user-swap-to-target-source-list">
+                      <option selected value="1">Test token 1</option>
+                      <option value="2">Test token 2</option>
+                      <option value="3">CWS</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="row mt-3">
+                  <div class="col-md-12 list-group-item list-group-item-light d-flex justify-content-between align-items-center" >
+                    Balance
+                    <span class="badge bg-primary rounded-pill" id="user-swap-to-target-balance">0</span>
+                  </div>
+                  <div class="col-md-12 text-center">to</div>
+                </div>
+                <!-- Second token -->
+                <div class="row">
+                  <div class="col-md-3">
+                    <label for="user-swap-to-target-target-name" class="form-label">Blockchain:</label>
+                    <input type="text" class="form-control" id="user-swap-to-target-target-name" value="ETH" disabled="true">
+                  </div>
+                  <div class="col-md-6">
+                    <label for="user-swap-to-target-target-amount" class="form-label">Amount:</label>
+                    <input type="text" class="form-control" id="user-swap-to-target-target-amount" placeholder="100.0" >
+                  </div>
+                  <div class="col-md-3">
+                    <label for="user-swap-to-target-target-list" class="form-label">Token:</label>
+                    <select class="form-select" aria-label="Select the token" id="user-swap-to-target-target-list">
+                      <option selected value="1">Test token 3</option>
+                      <option value="2">Test token 4</option>
+                      <option value="3">bCWS</option>
+                    </select>
+                  </div>
+                </div>
+                <!-- Actions -->
+                <div class="row mt-5">
+                  <div class="col-md-12 text-center">
+                    <button class="btn btn-warning text-center" id="btn-user-swap-to-target-approve-source">
+                      Approve on Ethereum
+                    </button>
+                      <button class="btn btn-primary" id="btn-user-swap-to-target-withdraw">
+                      Withdraw on BSC
+                    </button>
+                    <button class="btn btn-primary" type="button" disabled id="btn-user-swap-to-target-waiting">
+                      <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      Waiting for <span id="btn-user-swap-to-target-block">1</span>/12 blocks
+                    </button>
+                    <button class="btn btn-primary" type="button" disabled id="btn-user-swap-to-target-sig">
+                      <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      Waiting for signature...
+                    </button>
+                    <button class="btn btn-primary" id="btn-user-swap-to-target-action">
                       Swap
                     </button>
                   </div>
@@ -524,6 +587,9 @@
     <script type="text/javascript" src="abi-js/targetChain.js"></script>
     <script type="text/javascript" src="js/cache.js"></script>
     <script type="text/javascript" src="js/blockchain-config.js"></script>
+    <script type="text/javascript" src="js/user-swap.js"></script>
+    <!-- <script type="text/javascript" src="js/user-swap-to-source.js"></script> -->
+    <script type="text/javascript" src="js/user-swap-to-target.js"></script>
     <script type="text/javascript" src="js/provider-create.js"></script>
     <script type="text/javascript" src="js/provider-add.js"></script>
     <script type="text/javascript" src="js/provider-remove.js"></script>
