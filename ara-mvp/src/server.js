@@ -79,7 +79,7 @@ app.post('/create-lp', async (req, res) => {
 		});
 	}
 	
-	if (!receipt.status) {
+	if (!receipt || !receipt.status) {
 		return res.status(500).json({
 			status: 'ERROR',
 			message: `Transaction reverted! txid ${txid}`
@@ -211,7 +211,7 @@ app.post('/add-lp', async (req, res) => {
 		});
 	}
 
-	if (!receipt.status) {
+	if (!receipt || !receipt.status) {
 		return res.status(500).json({
 			status: 'ERROR',
 			message: `Transaction reverted! txid ${txid}`
@@ -350,7 +350,7 @@ app.post('/remove-lp', async (req, res) => {
 		});
 	}
 
-	if (!receipt.status) {
+	if (!receipt || !receipt.status) {
 		return res.status(500).json({
 			status: 'ERROR',
 			message: `Transaction reverted! txid ${txid}`
@@ -473,7 +473,7 @@ app.post('/swap/to-target', async (req, res) => {
 		});
 	}
 
-	if (!receipt.status) {
+	if (!receipt || !receipt.status) {
 		return res.status(500).json({
 			status: 'ERROR',
 			message: `Transaction reverted! txid ${txid}`
@@ -597,7 +597,7 @@ app.post('/swap/to-source', async (req, res) => {
 		});
 	}
 
-	if (!receipt.status) {
+	if (!receipt || !receipt.status) {
 		return res.status(500).json({
 			status: 'ERROR',
 			message: `Transaction reverted! txid ${txid}`
