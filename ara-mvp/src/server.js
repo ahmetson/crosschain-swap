@@ -558,11 +558,14 @@ app.post('/swap/to-target', async (req, res) => {
 app.post('/swap/to-source', async (req, res) => {
 	let txid = req.body.txid;
 	let sourceChainId = parseInt(req.body.sourceChainId);
-	let pairAddress = req.body.sourceAddress;
+	let pairAddress = req.body.pairAddress;
 	let sourceAmount = req.body.sourceAmount;
-	let targetChainId = parseInt(req.body.sourceChainId);
+	let targetChainId = parseInt(req.body.targetChainId);
 
 	if (!txid || !sourceChainId || !pairAddress || !sourceAmount || !targetChainId) {
+		console.log(`Txid: ${txid}, source chain ${sourceChainId}, pair ${pairAddress},
+		amount ${sourceAmount}, target chain id: ${targetChainId}`)
+
 		return res.status(500).json({
 			status: 'ERROR',
 			message: 'Invalid parameter'
@@ -621,30 +624,31 @@ app.post('/swap/to-source', async (req, res) => {
 		});
 	}
 	// initiate on source chain
-	let sourceWeb3 = blockchain.initWeb3(targetChainId);
+	let sourceWeb3 = blockchain.initWeb3(sourceChainId);
 
 	// now getting the parameters for signature
-	let event = receipt.logs[0];
-	let walletAddress = event.topics[1];
+	let event = receipt.logs[1];
+	let walletAddress = sourceWeb3.eth.abi.decodeParameter("address",	event.topics[1]);
 
 	// todo
 	// calculate right amount
 
 	// sign
 	let pair = await blockchain.pairInstance(sourceWeb3, pairAddress);
-    let arachyls = await ara.get(web3);
+    let arachyls = await ara.get(sourceWeb3);
 
 	let nonce;
 	try {
 		nonce = await pair.methods.nonceOf(walletAddress).call()
 	} catch (error) {
+		console.error(error);
 		return res.status(500).json({
 			status: 'ERROR',
 			message: 'Failed to fetch the nonce from pair'
 		})
 	}
 
-	let sig = await ara.signSwap(nonce, walletAddress, sourceAmount, arachyls[0]);
+	let sig = await ara.signSwap(nonce, walletAddress, sourceWeb3.utils.toWei(sourceAmount.toString()), arachyls[0], sourceWeb3);
 
 	return res.json({
 		status: 'OK!',

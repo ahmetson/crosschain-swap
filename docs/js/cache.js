@@ -7,8 +7,8 @@ let NAV = {
 };
 
 let PROCESS = {
-    SWAP_TARGET:    'user-swap-target',
-    SWAP_SOURCE:    'user-swap-source',
+    SWAP_TARGET:    'user-swap-to-target',
+    SWAP_SOURCE:    'user-swap-to-source',
     CREATE:         'provider-create',
     ADD:            'provider-add',
     REMOVE:         'provider-remove'
@@ -53,8 +53,8 @@ let defaultDeveloperProcess = function() {
 let defaultUserProcess = function() {
     return {
         nav:        NAV.USER,
-        process:    PROCESS.SWAP_SOURCE,
-        step:       STEP.ACTION,
+        process:    PROCESS.SWAP_TARGET,
+        step:       STEP.APPROVE_SOURCE,
         data:       {}
     };
 }
@@ -123,6 +123,47 @@ let getProviderRemoveNextStep = function(step) {
 
     return null;
 }
+
+let getUserNextStep = function(process, step) {
+    if (process === PROCESS.SWAP_SOURCE) {
+        return getSwapToSourceNextStep(step);
+    } else if (process === PROCESS.SWAP_TARGET) {
+        return getSwapToTargetNextStep(step);
+    }
+}
+
+let getSwapToTargetNextStep = function(step) {
+    if (!step) {
+        return STEP.APPROVE_SOURCE;
+    } else if (step === STEP.APPROVE_SOURCE) {
+        return STEP.ACTION;
+    } else if (step === STEP.ACTION) {
+        return STEP.BLOCK_WAITING;
+    } else if (step === STEP.BLOCK_WAITING) {
+        return STEP.SIG;
+    } else if (step === STEP.SIG) {
+        return STEP.WITHDRAW;
+    }
+
+    return null;
+}
+
+let getSwapToSourceNextStep = function(step) {
+    if (!step) {
+        return STEP.APPROVE_TARGET;
+    } else if (step === STEP.APPROVE_TARGET) {
+        return STEP.DEPOSIT;
+    } else if (step === STEP.DEPOSIT) {
+        return STEP.BLOCK_WAITING;
+    } else if (step === STEP.BLOCK_WAITING) {
+        return STEP.SIG;
+    } else if (step === STEP.SIG) {
+        return STEP.ACTION;
+    }
+
+    return null;
+}
+
 
 
 /**

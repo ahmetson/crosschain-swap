@@ -123,6 +123,33 @@ window.onProviderSwitch = async function(event) {
     }
 };
 
+window.onUserSwitch = async function(event) {
+    console.log(event.target);
+    let tabId = event.target.getAttribute("aria-controls");
+
+    let processStep = getProcessStep();
+    let defaultProcess = defaultUserProcess();
+
+    defaultProcess.process = tabId;
+    defaultProcess.step = getUserNextStep(tabId, null);
+
+    let content = document.getElementById('myTabContent');
+
+    if (processStep.process == tabId) {
+        console.log(`Show selected provider process ${processStep.nav} -> ${processStep.process}`);
+        content.dispatchEvent(new CustomEvent(`${processStep.nav}.${processStep.process}`, {
+            bubbles: true,
+            detail: processStep
+        } ))
+    } else {
+        console.log(`Show default provider process ${defaultProcess.nav} -> ${defaultProcess.process}`);
+        content.dispatchEvent(new CustomEvent(`${defaultProcess.nav}.${defaultProcess.process}`, {
+            bubbles: true,
+            detail: defaultProcess
+        } ))
+    }
+};
+
 function secondsToDhms(seconds) {
     if (seconds < 0) {
         return "Timeout";
@@ -161,6 +188,15 @@ window.addEventListener('load', async () => {
       tabEl.addEventListener('shown.bs.tab', function (event) {
         if (window.onProviderSwitch) {
           window.onProviderSwitch(event);
+        }
+      })
+    }
+
+    var tabElems = document.querySelectorAll('#user-tab button[data-bs-toggle="tab"]')
+    for (var tabEl of tabElems) {
+      tabEl.addEventListener('shown.bs.tab', function (event) {
+        if (window.onUserSwitch) {
+          window.onUserSwitch(event);
         }
       })
     }
