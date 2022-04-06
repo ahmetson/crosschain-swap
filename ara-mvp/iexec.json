@@ -1,0 +1,25 @@
+{
+  "description": "Ara MVP",
+  "license": "MIT",
+  "author": "Medet Ahmetson <admin@blocklords.io>",
+  "social": {
+    "website": "https://ahmetson.github.io/xdex",
+    "github": "https://github.com/ahmetson/xdex"
+  },
+  "logo": "logo.png",
+  "buyConf": {
+    "params": {
+      "iexec_args": ""
+    },
+    "tag": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "trust": "0",
+    "callback": "0x0000000000000000000000000000000000000000"
+  },
+  "app": {
+    "owner": "0xdB7a105e09fc39aEf67174090Fd92A8788CB8B5e",
+    "name": "ara-mvp",
+    "type": "DOCKER",
+    "multiaddr": "docker.io/ahmetson/ara-mvp:0.0.2",
+    "checksum": "0x6781650872c23aaffd0d74f1f8600fdd36bc97591c3a062b58b1f8a6c63ec6bf"
+  }
+}

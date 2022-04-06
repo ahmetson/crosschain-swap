@@ -21,41 +21,22 @@ ethereum:
     numBlocksToWait: 1
     numBlocksToWaitBeforeInvalidating: 1
     numBlocksToWaitForMissingTx: 1
-  - name: bscTestnet
-    blockStrategy: PUBSUB
-    url: https://data-seed-prebsc-1-s1.binance.org:8545
-    pollInterval: 1000
-    maxIdleConnections: 10
-    keepAliveDuration: 15000
-    connectionTimeout: 7000
-    readTimeout: 35000
-    healthcheckInterval: 3000
-    addTransactionRevertReason: true
-    numBlocksToWait: 1
-    numBlocksToWaitBeforeInvalidating: 1
-    numBlocksToWaitForMissingTx: 1
+  # - name: bscTestnet
+  #   blockStrategy: PUBSUB
+  #   url: https://data-seed-prebsc-1-s1.binance.org:8545
+  #   pollInterval: 1000
+  #   maxIdleConnections: 10
+  #   keepAliveDuration: 15000
+  #   connectionTimeout: 7000
+  #   readTimeout: 35000
+  #   healthcheckInterval: 3000
+  #   addTransactionRevertReason: true
+  #   numBlocksToWait: 1
+  #   numBlocksToWaitBeforeInvalidating: 1
+  #   numBlocksToWaitForMissingTx: 1
 eventFilters:
   - id: RinkebyBscTestnetPairCreated
     node: rinkeby
-    contractAddress: "0xCC084E9962eFc1f35fD18423Dc2424a0A0324f18"
-    eventSpecification:
-      eventName: PairCreated(tokens[0], tokens[1], pair, allPairs.length)
-      indexedParameterDefinitions:
-        - position: 0
-          type: ADDRESS
-        - position: 1
-          type: ADDRESS
-        - position: 2
-          type: ADDRESS
-      nonIndexedParameterDefinitions:
-        - position: 3
-          type: UINT256
-    correlationId:
-      type: INDEXED_PARAMETER
-      index: 0
-  - id: BscTestnetRinkebyPairCreated
-    node: bscTestnet
-    contractAddress: "0xCC084E9962eFc1f35fD18423Dc2424a0A0324f18"
     contractAddress: "0x1fbC435F5Ce41aF6E4988be77453b6383a3d3b5b"
     eventSpecification:
       eventName: PairCreated
@@ -72,3 +53,21 @@ eventFilters:
     correlationId:
       type: INDEXED_PARAMETER
       index: 0
+  # - id: BscTestnetRinkebyPairCreated
+  #   node: bscTestnet
+  #   contractAddress: "0xCC084E9962eFc1f35fD18423Dc2424a0A0324f18"
+  #   eventSpecification:
+  #     eventName: PairCreated
+  #     indexedParameterDefinitions:
+  #       - position: 0
+  #         type: ADDRESS
+  #       - position: 1
+  #         type: ADDRESS
+  #       - position: 2
+  #         type: ADDRESS
+  #     nonIndexedParameterDefinitions:
+  #       - position: 3
+  #         type: UINT256
+  #   correlationId:
+  #     type: INDEXED_PARAMETER
+  #     index: 0
