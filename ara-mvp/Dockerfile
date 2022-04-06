@@ -4,11 +4,16 @@ USER root
 
 WORKDIR /home/node/app
 
-# COPY ./package.json ./
-# COPY ./src /home/node/app/src
+COPY ./package.json ./
 
-# RUN npm -g config set user root
-# RUN npm cache clean --force
-# RUN npm install
+RUN npm -g config set user root
+RUN npm cache clean --force
+RUN npm install -g iexec
 
-# ENTRYPOINT ["node", "src/gateway.js"]
+ENV NODE_OPTIONS=--openssl-legacy-provider
+
+RUN npm install
+
+COPY ./src /home/node/app/src
+
+ENTRYPOINT ["node", "src/server.js"]
