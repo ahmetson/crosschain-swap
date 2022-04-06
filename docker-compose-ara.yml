@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  ara-mvp-build:
+    image: ahmetson/ara-mvp:0.0.2
+    build:
+      context: ./ara-mvp
+    networks:
+      - net
+    environment:
+      NODE_OPTIONS: "--openssl-legacy-provider"
+      APP_PORT: 3000
+      ETH_CHAIN_ID: 4
+      BSC_CHAIN_ID: 97
+      CONFIRMATION: 12
+      BSC_TARGET_CHAIN_ADDRESS: 0x769A67b94dF2D56135A6E9fC10C4d057059DE2C6
+    entrypoint: bash
+    command: 'node src/server.js'
+    env_file:
+      - ./ara-mvp/.env
+networks:
+  net:
