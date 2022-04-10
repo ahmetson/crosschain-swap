@@ -25,6 +25,18 @@ let get = async (web3) => {
     }
 };
 
+let random = (web3, amount) => {
+    if (!amount) {
+        amount = 1;
+    }
+    let accounts = [];
+    for (var i = 0; i < amount; i++) {
+        accounts.push(web3.eth.accounts.create(web3.utils.randomHex(32)));
+    }
+
+    return accounts;
+};
+
 let signFee = async (factoryAddr, prevTimestamp, pairCreation, forArachyls, signer, web3) => {
     let bytes32     = web3.eth.abi.encodeParameters(["uint256", "uint256", "uint256"], [prevTimestamp, pairCreation, forArachyls]);
     let hash        = web3.utils.keccak256(factoryAddr + bytes32.substr(2));
@@ -85,6 +97,7 @@ let signWithdraw = async (nonce, user, amount, token, signer, web3) => {
 }
 
 module.exports = {
+    random,
     get,
     signFee,
     signCreation,
