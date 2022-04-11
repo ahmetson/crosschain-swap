@@ -1,3 +1,8 @@
+# The main contributor went to work on https://blocklords.com/
+
+---
+
+```
 # Xdex &ndash; a trustless crosschain cryptocurrency dex
 
 > **Xdex** is the code name of the project. The final name would be decided after it's release of MVP.
